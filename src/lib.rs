@@ -1,24 +1,24 @@
 use scylla::Session;
 
-pub mod cluster;
-pub mod keyspace;
-pub mod table;
-
-pub use cluster::*;
-pub use keyspace::*;
-pub use table::*;
-
-pub struct Cluster {
-
+pub mod database {
+    pub mod cluster;
+    pub mod keyspace;
+    pub mod table;
 }
 
-pub struct Keyspace {
+pub struct Cluster<'a> {
+    pub cluster_name: String,
+    pub session: &'a Session,
+}
+
+pub struct Keyspace<'a> {
     pub keyspace_name: String,
-    pub session: Session,
+    pub session: &'a Session,
 }
-
-pub struct Table {
+pub struct Table<'a> {
     table_name: String,
     keyspace_name: String,
-    session: Session,
+    session: &'a Session,
 }
+
+
