@@ -1,4 +1,4 @@
-use scylladb_rs::{Schema, Keyspace, Table};
+use scylladb_rs::{Keyspace, Table};
 use scylla::{Session, SessionBuilder};
 
 #[tokio::test]
@@ -9,20 +9,6 @@ async fn integration_test() {
         .build()
         .await
         .expect("Session should be created");
-
-    let schema = Schema::new("scylladb_rs_test_schema".to_string(), &session);
-
-    // Test create_schema
-    match schema.create_schema().await {
-        Ok(_) => println!("Schema created successfully."),
-        Err(e) => println!("Failed to create schema: {}", e),
-    }
-
-    // Test check_schema_exists
-    match schema.check_schema_exists().await {
-        Ok(exists) => println!("Schema exists: {}", exists),
-        Err(e) => println!("Failed to check if schema exists: {}", e),
-    }
 
     let keyspace: Keyspace = Keyspace::new("scylladb_rs_test_keyspace".to_string(), &session);
     let table: Table = Table::new(
@@ -97,9 +83,4 @@ async fn integration_test() {
         Err(e) => println!("Failed to drop keyspace: {}", e),
     }
 
-    // Test drop_schema
-    match schema.drop_schema().await {
-        Ok(_) => println!("Schema dropped successfully."),
-        Err(e) => println!("Failed to drop schema: {}", e),
-    }
 }
