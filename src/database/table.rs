@@ -15,15 +15,7 @@ impl<'a> Table<'a> {
         Self { table_name, keyspace_name, session }
     }
 
-    // Delete the table with the already specified table name, WORKS
-    pub async fn delete_table(
-        &self
-    ) -> Result<(), Box<dyn Error + Send + Sync>> {
-        let query = format!("DROP TABLE IF EXISTS {}.{}",
-        self.keyspace_name, self.table_name);
-        self.session.query(query, ()).await?;
-        Ok(())
-    }
+
 
     // Create an index on the specified column
     pub async fn create_index(

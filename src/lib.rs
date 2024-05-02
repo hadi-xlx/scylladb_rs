@@ -1,13 +1,13 @@
 use scylla::Session;
 
 pub mod database {
-    pub mod cluster;
+    pub mod schema;
     pub mod keyspace;
     pub mod table;
 }
 
-pub struct Cluster<'a> {
-    pub cluster_name: String,
+pub struct Schema<'a> {
+    pub schema_name: String,
     pub session: &'a Session,
 }
 
