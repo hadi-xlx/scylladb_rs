@@ -8,10 +8,10 @@ pub mod query {
     pub mod update;
 }
 
-
 pub mod database {
     pub mod keyspace;
     pub mod table;
+    pub mod column;
     pub mod materialized_view;
 }
 
@@ -35,7 +35,5 @@ pub struct Column<'a> {
     pub table: &'a Table<'a>,
     pub name: String,
     pub data_type: String,
-    pub default: Option<String>,
-    pub is_primary_key: bool,
-    pub is_clustering_key: bool,
+
 }

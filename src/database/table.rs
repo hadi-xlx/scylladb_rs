@@ -15,11 +15,21 @@ impl<'a> Table<'a> {
     }
 
     pub async fn create(
-        &self
+        &self,
+        primary_keys: &[&str], // Array of primary key column names, first one is the partition key, others are clustering keys if any
+        columns: &[(&str, &str)] // Array of tuples with column names and their types
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
-        let query: String = format!(
-        "CREATE TABLE IF NOT EXISTS {}.{} (id UUID PRIMARY KEY)",
-        self.keyspace.name, self.name);
+        let columns_definition = columns.iter()
+            .map(|(name, type_)| format!("{} {}", name, type_))
+            .collect::<Vec<String>>().join(", ");
+    
+        let primary_keys_definition = primary_keys.join(", ");
+    
+        let query = format!(
+            "CREATE TABLE IF NOT EXISTS {}.{} ({}, PRIMARY KEY ({}))",
+            self.keyspace.name, self.name, columns_definition, primary_keys_definition
+        );
+    
         self.keyspace.session.query(query,()).await?;
         Ok(())
     }

@@ -20,27 +20,36 @@ async fn integration_test() {
         Err(e) => println!("Failed to create keyspace: {}", e),
     }
 
-    let table = Table::new(&keyspace, "test_table".to_string());
+    let table = Table::new(
+        &keyspace, 
+        "test_table".to_string()
+    );
 
+    let columns = [
+        ("user_id", "UUID"), 
+    ];
+    
+    let primary_keys = ["user_id"];
+    
     // Create table
-    match table.create().await {
+    match table.create(&primary_keys, &columns).await {
         Ok(_) => println!("Table created successfully."),
         Err(e) => println!("Failed to create table: {}", e),
     }
 
-    // Add column
-    match table.create_column("column1", "text").await {
+    match table.create_column("user_name", "text").await {
         Ok(_) => println!("Column added successfully."),
         Err(e) => println!("Failed to add column: {}", e),
     }
 
     // Create materialized view
-    let materialized_view = MaterializedView::new(
-        &table, "mv_test_table".to_string(),
-        "id".to_string(),
-        "column1 IS NOT NULL".to_string()
+    let materialized_view: MaterializedView = MaterializedView::new(
+        &table, 
+        "mv_test_table".to_string(),
+        "user_id".to_string(),  // Include all primary key columns
+        "user_id IS NOT NULL".to_string()  // Ensure all primary keys and the column of interest are not null
     ).await;
-    
+
     match materialized_view.create_materialized_view().await {
         Ok(_) => println!("Materialized view created successfully."),
         Err(e) => println!("Failed to create materialized view: {}", e),
@@ -59,7 +68,7 @@ async fn integration_test() {
     }
 
     // Delete column
-    match table.delete_column("column1").await {
+    match table.delete_column("user_name").await {
         Ok(_) => println!("Column deleted successfully."),
         Err(e) => println!("Failed to delete column: {}", e),
     }
