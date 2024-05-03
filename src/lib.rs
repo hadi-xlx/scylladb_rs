@@ -4,9 +4,16 @@ pub mod query {
     pub mod delete;
     pub mod insert_if_unique;
     pub mod insert;
+    pub mod query;
     pub mod select;
     pub mod update;
 }
+
+pub struct ScyllaClient<'a> {
+    pub session: &'a Session,
+}
+
+
 
 pub mod database {
     pub mod keyspace;
