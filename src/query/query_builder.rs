@@ -54,7 +54,13 @@ impl QueryBuilder {
             self.columns.join(", ")
         };
 
-        let mut query = format!("{} {} FROM {}", operation, columns, self.table);
+        // Include keyspace in the table name
+        let full_table_name = format!("{}.{}", self.keyspace, self.table);
+        let mut query = match self.operation {
+            Operations::Select | Operations::Delete => format!("{} {} FROM {}", operation, columns, full_table_name),
+            Operations::Insert | Operations::InsertIfNotExists => format!("{} {}", operation, full_table_name),
+            Operations::Update => format!("{} {}", operation, full_table_name),
+        };
 
         if !self.conditions.is_empty() {
             query.push_str(" WHERE ");

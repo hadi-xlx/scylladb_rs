@@ -1,6 +1,5 @@
 use scylladb_rs::ScyllaClient;
 use scylladb_rs::query::query::*;
-use scylladb_rs::query::query_builder::*;
 
 #[tokio::test]
 async fn integration_test() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
