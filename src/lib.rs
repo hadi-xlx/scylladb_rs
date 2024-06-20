@@ -7,9 +7,12 @@ pub mod query {
     pub mod insert_if_unique;
     pub mod insert;
     pub mod query;
+    pub mod query_builder;
     pub mod select;
     pub mod update;
 }
+
+
 
 pub mod database {
     pub mod column;
