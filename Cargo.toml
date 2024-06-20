@@ -2,9 +2,11 @@
 name = "scylladb_rs"
 version = "0.1.0"
 edition = "2021"
+authors = ["hadi-xlx & floris-xlx"]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-scylla = "0.12"
+scylla = "0.13"
 tokio = {version = "1.37.0", features = ["full"]}
