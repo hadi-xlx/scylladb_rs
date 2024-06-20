@@ -1,6 +1,5 @@
 use scylla::Session;
 
-
 pub mod auth;
 
 pub mod query {

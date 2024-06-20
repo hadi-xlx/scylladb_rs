@@ -14,50 +14,52 @@ impl ScyllaClient {
         primary_keys: &[&str], 
         columns: &[(&str, &str)],
         sorting: Option<&[(&str, &str)]>,
-        time_to_live: Option<u32>, // Add the time_to_live parameter
+        time_to_live: Option<u32>,
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
+
         let columns_definition = columns.iter()
         .map(|(name, type_)| format!("{} {}", name, type_))
         .collect::<Vec<String>>().join(", ");
 
-    let primary_keys_definition = primary_keys.join(", ");
-    
-    let sorting_definition = if let Some(sorting) = sorting {
-        let sorting_clauses = sorting.iter()
-            .map(|(column, order)| format!("{} {}", column, order))
-            .collect::<Vec<String>>().join(", ");
-        format!("CLUSTERING ORDER BY ({})", sorting_clauses)
-    } else {
-        String::new()
-    };
+        let primary_keys_definition = primary_keys.join(", ");
+        
+        let sorting_definition = if let Some(sorting) = sorting {
+            let sorting_clauses = sorting.iter()
+                .map(|(column, order)| format!("{} {}", column, order))
+                .collect::<Vec<String>>().join(", ");
+            format!("CLUSTERING ORDER BY ({})", sorting_clauses)
+        } else {
+            String::new()
+        };
 
-    let ttl_definition = if let Some(ttl) = time_to_live {
-        format!("default_time_to_live = {}", ttl)
-    } else {
-        String::new()
-    };
+        let ttl_definition = if let Some(ttl) = time_to_live {
+            format!("default_time_to_live = {}", ttl)
+        } else {
+            String::new()
+        };
 
-    let with_clause = if !sorting_definition.is_empty() || !ttl_definition.is_empty() {
-        let mut clauses = Vec::new();
-        if !sorting_definition.is_empty() {
-            clauses.push(sorting_definition);
-        }
-        if !ttl_definition.is_empty() {
-            clauses.push(ttl_definition);
-        }
-        format!(" WITH {}", clauses.join(" AND "))
-    } else {
-        String::new()
-    };
+        let with_clause = if !sorting_definition.is_empty() || !ttl_definition.is_empty() {
+            let mut clauses = Vec::new();
+            if !sorting_definition.is_empty() {
+                clauses.push(sorting_definition);
+            }
+            if !ttl_definition.is_empty() {
+                clauses.push(ttl_definition);
+            }
+            format!(" WITH {}", clauses.join(" AND "))
+        } else {
+            String::new()
+        };
 
-    let query = format!(
-        "CREATE TABLE IF NOT EXISTS {}.{} ({}, PRIMARY KEY ({})){}",
-        keyspace, table, columns_definition, primary_keys_definition, with_clause
-    );
+        let query = format!(
+            "CREATE TABLE IF NOT EXISTS {}.{} ({}, PRIMARY KEY ({})){}",
+            keyspace, table, columns_definition, primary_keys_definition, with_clause
+        );
 
         println!("Query: {}", query);
     
         self.session.query(query,()).await?;
+
         Ok(())
     }
 
@@ -66,10 +68,13 @@ impl ScyllaClient {
         keyspace: &str,
         table: &str
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
+
         let query: String = format!(
         "DROP TABLE IF EXISTS {}.{}",
         keyspace, table);
+
         self.session.query(query,()).await?;
+
         Ok(())
     }
 
@@ -81,10 +86,13 @@ impl ScyllaClient {
         index: &str,
         column: &str
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
+
         let query = format!(
         "CREATE INDEX IF NOT EXISTS {} ON {}.{} ({})",
         index,keyspace, table, column);
+
         self.session.query(query, ()).await?;
+
         Ok(())
     }
 
@@ -94,10 +102,13 @@ impl ScyllaClient {
         keyspace: &str,
         index: &str
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
+
         let query = format!(
         "DROP INDEX IF EXISTS {}.{}",
         keyspace, index);
+
         self.session.query(query, ()).await?;
+
         Ok(())
     }
 
@@ -108,11 +119,15 @@ impl ScyllaClient {
         table: &str,
         column: &str
     ) -> Result<bool, Box<dyn Error + Send + Sync>> {
+
         let query: String = format!(
         "SELECT {}, COUNT(*) FROM {}.{} GROUP BY {} HAVING COUNT(*) > 1",
         column, keyspace, table, column);
+
         let query_result: QueryResult = self.session.query(query, ()).await?;
+
         let rows_count: Result<usize,RowsExpectedError>  = query_result.rows_num();
+
         match rows_count {
             Ok(count) => Ok(count > 1),
             Err(e) => Err(Box::new(e)),
@@ -124,10 +139,13 @@ impl ScyllaClient {
         keyspace: &str,
         table: &str
     ) -> Result<i64, Box<dyn Error + Send + Sync>> {
+
         let query: String = format!(
         "SELECT COUNT(*) FROM {}.{}",
         keyspace, table);
+
         let query_result: QueryResult  = self.session.query(query, ()).await?;
+
         let rows_count: Result<usize,RowsExpectedError> = query_result.rows_num();
 
         match rows_count {
@@ -141,10 +159,13 @@ impl ScyllaClient {
         keyspace: &str,
         table: &str
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
+
         let query = format!(
         "TRUNCATE TABLE {}.{}",
         keyspace, table);
+
         self.session.query(query, ()).await?;
+        
         Ok(())
     }
 
