@@ -3,106 +3,115 @@ use std::error::Error;
 use scylla::QueryResult;
 use scylla::transport::query_result::RowsExpectedError;
 
-use crate::{Keyspace, Table};
+use crate::ScyllaClient;
 
-impl<'a> Table<'a> {
-    //Constructor
-    pub fn new(
-        keyspace: &'a Keyspace<'a>,
-        name: String
-    ) -> Self {
-        Self {keyspace, name }
-    }
+impl ScyllaClient {
 
-    pub async fn create(
+    pub async fn create_table(
         &self,
-        primary_keys: &[&str], // Array of primary key column names, first one is the partition key, others are clustering keys if any
-        columns: &[(&str, &str)] // Array of tuples with column names and their types
+        keyspace: &str,
+        table: &str,
+        primary_keys: &[&str], 
+        columns: &[(&str, &str)],
+        sorting: Option<&[(&str, &str)]>,
+        time_to_live: Option<u32>, // Add the time_to_live parameter
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
         let columns_definition = columns.iter()
-            .map(|(name, type_)| format!("{} {}", name, type_))
+        .map(|(name, type_)| format!("{} {}", name, type_))
+        .collect::<Vec<String>>().join(", ");
+
+    let primary_keys_definition = primary_keys.join(", ");
+    
+    let sorting_definition = if let Some(sorting) = sorting {
+        let sorting_clauses = sorting.iter()
+            .map(|(column, order)| format!("{} {}", column, order))
             .collect::<Vec<String>>().join(", ");
+        format!("CLUSTERING ORDER BY ({})", sorting_clauses)
+    } else {
+        String::new()
+    };
+
+    let ttl_definition = if let Some(ttl) = time_to_live {
+        format!("default_time_to_live = {}", ttl)
+    } else {
+        String::new()
+    };
+
+    let with_clause = if !sorting_definition.is_empty() || !ttl_definition.is_empty() {
+        let mut clauses = Vec::new();
+        if !sorting_definition.is_empty() {
+            clauses.push(sorting_definition);
+        }
+        if !ttl_definition.is_empty() {
+            clauses.push(ttl_definition);
+        }
+        format!(" WITH {}", clauses.join(" AND "))
+    } else {
+        String::new()
+    };
+
+    let query = format!(
+        "CREATE TABLE IF NOT EXISTS {}.{} ({}, PRIMARY KEY ({})){}",
+        keyspace, table, columns_definition, primary_keys_definition, with_clause
+    );
+
+        println!("Query: {}", query);
     
-        let primary_keys_definition = primary_keys.join(", ");
-    
-        let query = format!(
-            "CREATE TABLE IF NOT EXISTS {}.{} ({}, PRIMARY KEY ({}))",
-            self.keyspace.name, self.name, columns_definition, primary_keys_definition
-        );
-    
-        self.keyspace.session.query(query,()).await?;
+        self.session.query(query,()).await?;
         Ok(())
     }
 
-    pub async fn drop(
+    pub async fn drop_table(
         &self,
+        keyspace: &str,
+        table: &str
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
         let query: String = format!(
         "DROP TABLE IF EXISTS {}.{}",
-        self.keyspace.name, self.name);
-        self.keyspace.session.query(query,()).await?;
-        Ok(())
-    }
-
-        // Add a column to the specified table, WORKS
-    pub async fn create_column(
-        &self,
-        column_name: &str,
-        column_datatype: &str
-    ) -> Result<(), Box<dyn Error + Send + Sync>> {
-        let query = format!(
-        "ALTER TABLE {}.{} ADD {} {}",
-        self.keyspace.name, self.name, column_name, column_datatype);
-        self.keyspace.session.query(query, ()).await?;
-        Ok(())
-    }
-
-    // Remove a column from the specified table, WORKS
-    pub async fn delete_column(
-        &self,
-         column_name: &str
-    ) -> Result<(), Box<dyn Error + Send + Sync>> {
-        let query = format!(
-        "ALTER TABLE {}.{} DROP {}",
-        self.keyspace.name, self.name, column_name);
-        self.keyspace.session.query(query, ()).await?;
+        keyspace, table);
+        self.session.query(query,()).await?;
         Ok(())
     }
 
     // Create an index on the specified column
     pub async fn create_index(
         &self,
-        index_name: &str,
-        column_name: &str
+        keyspace: &str,
+        table: &str,
+        index: &str,
+        column: &str
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
         let query = format!(
         "CREATE INDEX IF NOT EXISTS {} ON {}.{} ({})",
-        index_name,self.keyspace.name, self.name, column_name);
-        self.keyspace.session.query(query, ()).await?;
+        index,keyspace, table, column);
+        self.session.query(query, ()).await?;
         Ok(())
     }
 
     // Drop an index
     pub async fn drop_index(
         &self,
-        index_name: &str
+        keyspace: &str,
+        index: &str
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
         let query = format!(
         "DROP INDEX IF EXISTS {}.{}",
-        self.keyspace.name, index_name);
-        self.keyspace.session.query(query, ()).await?;
+        keyspace, index);
+        self.session.query(query, ()).await?;
         Ok(())
     }
 
     // Check for duplicates in a column of the table
     pub async fn check_duplicates(
         &self,
-        column_name: &str
+        keyspace: &str,
+        table: &str,
+        column: &str
     ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let query: String = format!(
         "SELECT {}, COUNT(*) FROM {}.{} GROUP BY {} HAVING COUNT(*) > 1",
-        column_name, self.keyspace.name, self.name, column_name);
-        let query_result: QueryResult = self.keyspace.session.query(query, ()).await?;
+        column, keyspace, table, column);
+        let query_result: QueryResult = self.session.query(query, ()).await?;
         let rows_count: Result<usize,RowsExpectedError>  = query_result.rows_num();
         match rows_count {
             Ok(count) => Ok(count > 1),
@@ -110,14 +119,15 @@ impl<'a> Table<'a> {
         }
     }
 
-    // Count rows in the specified table
     pub async fn count_rows(
-        &self
+        &self,
+        keyspace: &str,
+        table: &str
     ) -> Result<i64, Box<dyn Error + Send + Sync>> {
         let query: String = format!(
         "SELECT COUNT(*) FROM {}.{}",
-        self.keyspace.name, self.name);
-        let query_result: QueryResult  = self.keyspace.session.query(query, ()).await?;
+        keyspace, table);
+        let query_result: QueryResult  = self.session.query(query, ()).await?;
         let rows_count: Result<usize,RowsExpectedError> = query_result.rows_num();
 
         match rows_count {
@@ -126,14 +136,15 @@ impl<'a> Table<'a> {
         }
     }
 
-    // Truncate the specified table, WOKRS
-    pub async fn truncate(
-        &self
+    pub async fn truncate_table(
+        &self,
+        keyspace: &str,
+        table: &str
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
         let query = format!(
         "TRUNCATE TABLE {}.{}",
-        self.keyspace.name, self.name);
-        self.keyspace.session.query(query, ()).await?;
+        keyspace, table);
+        self.session.query(query, ()).await?;
         Ok(())
     }
 

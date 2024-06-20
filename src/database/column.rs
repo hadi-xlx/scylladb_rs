@@ -1,59 +1,54 @@
 use std::error::Error;
 
-use crate::{Column,Table};
+use crate::ScyllaClient;
 
-impl<'a> Column<'a> {
-    /// Creates a new Column instance.
-    pub fn new(
-        table: &'a Table<'a>,
-        name: String,
-        data_type: String,
-    ) -> Self {
-        Column {
-            table,
-            name,
-            data_type,
+impl ScyllaClient  {
 
-        }
-    }
+    pub async fn create_column(
+        &self,
+        keyspace: &str,
+        table: &str,
+        column: &str,
+        data_type: &str
+    ) -> Result<(), Box<dyn Error + Send + Sync>> {
 
-    /// Creates this column in the database.
-    pub async fn create(&self) -> Result<(), Box<dyn Error + Send + Sync>> {
-
-        let column_definition = self.to_cql_definition();
+        let column_definition = self.to_cql_definition(column,data_type);
 
         let query = format!(
             "ALTER TABLE {}.{} ADD {}",
-            self.table.keyspace.name,
-            self.table.name,
+            keyspace,
+            table,
             column_definition
         );
 
-        self.table.keyspace.session.query(query, ()).await?;
+        self.session.query(query, ()).await?;
 
         Ok(())
     }
 
     /// Drops this column from the database.
-    pub async fn drop(&self) -> Result<(), Box<dyn Error + Send + Sync>> {
+    pub async fn drop_column(
+        &self,
+        keyspace: &str,
+        table: &str,
+        column: &str
+    ) -> Result<(), Box<dyn Error + Send + Sync>> {
 
         let query = format!(
             "ALTER TABLE {}.{} DROP {}",
-            self.table.keyspace.name,
-            self.table.name,
-            self.name
+            keyspace,
+            table,
+            column
         );
 
-        self.table.keyspace.session.query(query, ()).await?;
+        self.session.query(query, ()).await?;
 
         Ok(())
     }
 
     /// Returns a formatted string representing the column definition for CQL queries.
-    fn to_cql_definition(&self) -> String {
-
-        let definition: String = format!("{} {}", self.name, self.data_type);
-
-        definition
+    /// Returns a formatted string representing the column definition for CQL queries.
+    fn to_cql_definition(&self, column: &str, data_type: &str) -> String {
+        format!("{} {}", column, data_type)
     }
 }

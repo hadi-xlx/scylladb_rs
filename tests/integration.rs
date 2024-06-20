@@ -1,93 +1,34 @@
-use scylladb_rs::{Table, Keyspace, MaterializedView};
-use scylla::{Session, SessionBuilder};
+use scylladb_rs::ScyllaClient;
 
 #[tokio::test]
-async fn integration_test() {
-    let session: Session = SessionBuilder::new()
-        .known_node("localhost:9042")
-        .build()
-        .await
-        .unwrap(); // Using unwrap here for simplicity, as the session creation is critical and not part of the test logic
+async fn integration_test()  {
 
-    let keyspace: Keyspace = Keyspace::new(
-        "scylladb_rs_test_keyspace".to_string(),
-        &session
-    );
+    let client = ScyllaClient::new(
+        vec!["127.0.0.1:9042"]).await.unwrap();
 
-    let replication_strategy = "{ 'class' : 'SimpleStrategy', 'replication_factor' : 1 }";
-    match keyspace.create(replication_strategy).await {
-        Ok(_) => println!("Keyspace created successfully."),
-        Err(e) => println!("Failed to create keyspace: {}", e),
-    }
+    let keyspace_dropping_result = client.drop_keyspace(
+        "test"
+    ).await.unwrap();
 
-    let table = Table::new(
-        &keyspace, 
-        "test_table".to_string()
-    );
+    println!("Keyspace dropping result: {:?}", keyspace_dropping_result);
 
-    let columns = [
-        ("user_id", "UUID"), 
-    ];
-    
-    let primary_keys = ["user_id"];
-    
-    // Create table
-    match table.create(&primary_keys, &columns).await {
-        Ok(_) => println!("Table created successfully."),
-        Err(e) => println!("Failed to create table: {}", e),
-    }
+    let keyspace_creating_result = client.create_keyspace_simple(
+        "test",
+        1
+    ).await.unwrap();
 
-    match table.create_column("user_name", "text").await {
-        Ok(_) => println!("Column added successfully."),
-        Err(e) => println!("Failed to add column: {}", e),
-    }
+    println!("Keyspace creating result: {:?}", keyspace_creating_result);
 
-    // Create materialized view
-    let materialized_view: MaterializedView = MaterializedView::new(
-        &table, 
-        "mv_test_table".to_string(),
-        "user_id".to_string(),  // Include all primary key columns
-        "user_id IS NOT NULL".to_string()  // Ensure all primary keys and the column of interest are not null
-    ).await;
+    let table_creating_result = client.create_table(
+        "test",
+        "example_table",
+        &["id","name"],
+        &[("id", "int"), ("name", "text")],
+        Some(&[("name", "ASC")]),
+        Some(3600)
+    ).await.unwrap();
 
-    match materialized_view.create_materialized_view().await {
-        Ok(_) => println!("Materialized view created successfully."),
-        Err(e) => println!("Failed to create materialized view: {}", e),
-    }
+    println!("Table creating result: {:?}", table_creating_result);
 
-    // Drop materialized view
-    match materialized_view.drop_materialized_view().await {
-        Ok(_) => println!("Materialized view dropped successfully."),
-        Err(e) => println!("Failed to drop materialized view: {}", e),
-    }
 
-    // Drop index
-    match table.drop_index("test_index").await {
-        Ok(_) => println!("Index dropped successfully."),
-        Err(e) => println!("Failed to drop index: {}", e),
-    }
-
-    // Delete column
-    match table.delete_column("user_name").await {
-        Ok(_) => println!("Column deleted successfully."),
-        Err(e) => println!("Failed to delete column: {}", e),
-    }
-
-    // Truncate table
-    match table.truncate().await {
-        Ok(_) => println!("Table truncated successfully."),
-        Err(e) => println!("Failed to truncate table: {}", e),
-    }
-
-    // Drop table
-    match table.drop().await {
-        Ok(_) => println!("Table dropped successfully."),
-        Err(e) => println!("Failed to drop table: {}", e),
-    }
-
-    // Drop the keyspace
-    match keyspace.drop().await {
-        Ok(_) => println!("Keyspace dropped successfully."),
-        Err(e) => println!("Failed to drop keyspace: {}", e),
-    }
 }

@@ -1,39 +1,50 @@
 use std::error::Error;
+use std::collections::HashMap;
 
-use scylla::Session;
+use crate::ScyllaClient;
 
-use crate::Keyspace;
+impl ScyllaClient{
 
-impl<'a> Keyspace<'a> {
-
-    pub fn new(
-        name: String,
-        session: &'a Session,
-    ) -> Self {
-        Self { name, session }
-    }
-
-    pub async fn create(
+    pub async fn create_keyspace_simple(
         &self,
-        replication_strategy: &str
+        keyspace: &str,
+        replication_factor: u64
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
         let query: String = format!(
-        "CREATE KEYSPACE IF NOT EXISTS {} WITH replication = {}",
-        self.name, replication_strategy);
+            "CREATE KEYSPACE IF NOT EXISTS {} WITH replication = {{'class': 'SimpleStrategy','replication_factor': {}}}",
+            keyspace, replication_factor);
         self.session.query(query, ()).await?;
         Ok(())
     }
 
-    pub async fn drop(
-        &self
+    pub async fn create_keyspace_network(
+        &self,
+        keyspace: &str,
+        datacenters: HashMap<&str, u64>
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
+        let replication_factors: Vec<String> = datacenters
+            .iter()
+            .map(|(dc, rf)| format!("'{}': {}", dc, rf))
+            .collect();
+        let replication_factors_str = replication_factors.join(", ");
+        
         let query: String = format!(
-        "DROP KEYSPACE IF EXISTS {}",
-        self.name);
-        self.session.query(query,()).await?;
+            "CREATE KEYSPACE IF NOT EXISTS {} WITH replication = {{'class': 'NetworkTopologyStrategy', {}}}",
+            keyspace, replication_factors_str);
+        self.session.query(query, ()).await?;
         Ok(())
     }
 
+    pub async fn drop_keyspace(
+        &self,
+        keyspace: &str
+    ) -> Result<(), Box<dyn Error + Send + Sync>> {
+        let query: String = format!(
+        "DROP KEYSPACE IF EXISTS {}",
+        keyspace);
+        self.session.query(query,()).await?;
+        Ok(())
+    }
 
 }
 
