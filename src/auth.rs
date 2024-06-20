@@ -2,6 +2,7 @@ use scylla::{Session, SessionBuilder};
 use std::error::Error;
 
 use crate::ScyllaClient;
+use crate::query::query::{QueryBuilder, Operations};
 
 impl ScyllaClient {
 
@@ -18,5 +19,9 @@ impl ScyllaClient {
         let session: Session = builder.build().await?;
 
         Ok(ScyllaClient { session })
+    }
+
+    pub fn query(&self, keyspace: &str, table: &str) -> QueryBuilder {
+        QueryBuilder::new(Operations::Select, keyspace, table)
     }
 }
