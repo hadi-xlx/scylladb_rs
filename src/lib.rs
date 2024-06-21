@@ -3,13 +3,8 @@ use scylla::Session;
 pub mod auth;
 
 pub mod query {
-    pub mod delete;
-    pub mod insert_if_unique;
-    pub mod insert;
     pub mod query;
     pub mod query_builder;
-    pub mod select;
-    pub mod update;
 }
 
 
