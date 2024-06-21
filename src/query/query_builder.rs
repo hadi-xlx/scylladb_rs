@@ -24,6 +24,86 @@ impl QueryBuilder {
         self
     }
 
+    pub fn eq(mut self, column: &str, value: &str) -> Self {
+        let condition = format!("{} = '{}'", column, value);
+        self.conditions.push(condition);
+        self
+    }
+
+    pub fn neq(mut self, column: &str, value: &str) -> Self {
+        let condition = format!("{} != '{}'", column, value);
+        self.conditions.push(condition);
+        self
+    }
+
+    pub fn gt(mut self, column: &str, value: &str) -> Self {
+        let condition = format!("{} > '{}'", column, value);
+        self.conditions.push(condition);
+        self
+    }
+
+    pub fn gte(mut self, column: &str, value: &str) -> Self {
+        let condition = format!("{} >= '{}'", column, value);
+        self.conditions.push(condition);
+        self
+    }
+
+    pub fn lt(mut self, column: &str, value: &str) -> Self {
+        let condition = format!("{} < '{}'", column, value);
+        self.conditions.push(condition);
+        self
+    }
+
+    pub fn lte(mut self, column: &str, value: &str) -> Self {
+        let condition = format!("{} <= '{}'", column, value);
+        self.conditions.push(condition);
+        self
+    }
+
+    pub fn in_list(mut self, column: &str, values: &[&str]) -> Self {
+        let value_list = values.join(", ");
+        let condition = format!("{} IN ({})", column, value_list);
+        self.conditions.push(condition);
+        self
+    }
+
+    pub fn not_in_list(mut self, column: &str, values: &[&str]) -> Self {
+        let value_list = values.join(", ");
+        let condition = format!("{} NOT IN ({})", column, value_list);
+        self.conditions.push(condition);
+        self
+    }
+
+    pub fn between(mut self, column: &str, lower: &str, upper: &str) -> Self {
+        let condition = format!("{} BETWEEN '{}' AND '{}'", column, lower, upper);
+        self.conditions.push(condition);
+        self
+    }
+
+    pub fn not_between(mut self, column: &str, lower: &str, upper: &str) -> Self {
+        let condition = format!("{} NOT BETWEEN '{}' AND '{}'", column, lower, upper);
+        self.conditions.push(condition);
+        self
+    }
+
+    pub fn like(mut self, column: &str, pattern: &str) -> Self {
+        let condition = format!("{} LIKE '{}'", column, pattern);
+        self.conditions.push(condition);
+        self
+    }
+
+    pub fn is_null(mut self, column: &str) -> Self {
+        let condition = format!("{} IS NULL", column);
+        self.conditions.push(condition);
+        self
+    }
+
+    pub fn is_not_null(mut self, column: &str) -> Self {
+        let condition = format!("{} IS NOT NULL", column);
+        self.conditions.push(condition);
+        self
+    }
+
     pub fn clause(mut self, clause: &str) -> Self {
         self.clauses.push(clause.to_string());
         self
@@ -54,7 +134,6 @@ impl QueryBuilder {
             self.columns.join(", ")
         };
 
-        // Include keyspace in the table name
         let full_table_name = format!("{}.{}", self.keyspace, self.table);
         let mut query = match self.operation {
             Operations::Select | Operations::Delete => format!("{} {} FROM {}", operation, columns, full_table_name),

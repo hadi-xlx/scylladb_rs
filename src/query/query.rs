@@ -10,6 +10,7 @@ pub struct QueryBuilder {
     pub insert_options: Vec<InsertOptions>,
 }
 
+
 #[derive(Debug)]
 pub enum Operations {
     Select,
