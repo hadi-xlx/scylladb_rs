@@ -1,9 +1,12 @@
 use serde_json::Value;
 use crate::query::query::*;
 use std::collections::HashMap;
+use crate::ScyllaClient;
+use scylla::QueryResult;
+use std::error::Error;
 
-impl QueryBuilder {
-    pub fn new(operation: Operations, keyspace: &str, table: &str) -> Self {
+impl<'a> QueryBuilder<'a> {
+    pub fn new(operation: Operations, keyspace: &str, table: &str, client: &'a ScyllaClient) -> Self {
         Self {
             operation,
             keyspace: keyspace.to_string(),
@@ -13,9 +16,10 @@ impl QueryBuilder {
             clauses: Vec::new(),
             order: None,
             insert_options: Vec::new(),
+            client,
         }
     }
-
+    
     pub fn select(mut self, columns: &[&str]) -> Self {
         self.columns = columns.iter().map(|&col| col.to_string()).collect();
         self
@@ -40,6 +44,11 @@ impl QueryBuilder {
         self.clauses.push(format!("JSON '{}'", json_string));
         self
     }
+
+    pub async fn execute(&self, query: String) -> Result<QueryResult, Box<dyn Error + Send + Sync>> {
+        self.client.session.query(query, &[]).await.map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)
+    }
+
 
     pub fn where_condition(mut self, condition: &str) -> Self {
         self.conditions.push(condition.to_string());
@@ -141,7 +150,7 @@ impl QueryBuilder {
         self
     }
 
-    pub fn build(self) -> String {
+    pub fn build(&self) -> String {
         let operation = match self.operation {
             Operations::Select => "SELECT",
             Operations::Insert => "INSERT INTO",
@@ -149,7 +158,7 @@ impl QueryBuilder {
             Operations::Update => "UPDATE",
             Operations::Delete => "DELETE",
         };
-    
+
         let columns = if self.columns.is_empty() {
             if self.operation == Operations::Delete {
                 "".to_string()
@@ -159,7 +168,7 @@ impl QueryBuilder {
         } else {
             self.columns.join(", ")
         };
-    
+
         let full_table_name = format!("{}.{}", self.keyspace, self.table);
         let mut query = match self.operation {
             Operations::Select => format!("{} {} FROM {}", operation, columns, full_table_name),
@@ -173,33 +182,33 @@ impl QueryBuilder {
             },
             Operations::Update => format!("{} {}", operation, full_table_name),
         };
-    
+
         if self.operation == Operations::Update && !self.columns.is_empty() {
             query.push_str(" SET ");
             query.push_str(&columns);
         }
-    
+
         if !self.conditions.is_empty() {
             query.push_str(" WHERE ");
             query.push_str(&self.conditions.join(" AND "));
         }
-    
-        if let Some((col, dir)) = self.order {
+
+        if let Some((ref col, ref dir)) = self.order {
             let dir_str = match dir {
                 OrderDirection::Asc => "ASC",
                 OrderDirection::Desc => "DESC",
             };
             query.push_str(&format!(" ORDER BY {} {}", col, dir_str));
         }
-    
+
         if !self.clauses.is_empty() && !self.clauses[0].starts_with("JSON") {
             query.push_str(" ");
             query.push_str(&self.clauses.join(" "));
         }
-    
+
         if !self.insert_options.is_empty() {
             query.push_str(" USING ");
-            let options: Vec<String> = self.insert_options.into_iter().map(|option| {
+            let options: Vec<String> = self.insert_options.iter().map(|option| {
                 match option {
                     InsertOptions::UsingTimestamp(ts) => format!("TIMESTAMP {}", ts),
                     InsertOptions::UsingTTL(ttl) => format!("TTL {}", ttl),
@@ -207,7 +216,7 @@ impl QueryBuilder {
             }).collect();
             query.push_str(&options.join(" AND "));
         }
-    
+
         query.push(';');
         query
     }

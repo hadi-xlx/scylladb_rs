@@ -1,5 +1,7 @@
+use crate::ScyllaClient;
+
 #[derive(Debug)]
-pub struct QueryBuilder {
+pub struct QueryBuilder<'a> {
     pub operation: Operations,
     pub keyspace: String,
     pub table: String,
@@ -8,6 +10,7 @@ pub struct QueryBuilder {
     pub clauses: Vec<String>,
     pub order: Option<(String, OrderDirection)>,
     pub insert_options: Vec<InsertOptions>,
+    pub client: &'a ScyllaClient,
 }
 
 

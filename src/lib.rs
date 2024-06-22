@@ -7,8 +7,6 @@ pub mod query {
     pub mod query_builder;
 }
 
-
-
 pub mod database {
     pub mod column;
     pub mod keyspace;
@@ -16,6 +14,7 @@ pub mod database {
     pub mod table;
 }
 
+#[derive(Debug)]
 pub struct ScyllaClient {
     pub session: Session,
 }
