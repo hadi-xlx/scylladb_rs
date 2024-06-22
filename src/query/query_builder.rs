@@ -1,4 +1,5 @@
 use crate::query::query::*;
+use std::collections::HashMap;
 
 impl QueryBuilder {
     pub fn new(operation: Operations, keyspace: &str, table: &str) -> Self {
@@ -24,6 +25,14 @@ impl QueryBuilder {
         self
     }
 
+    pub fn update(mut self, values: HashMap<&str, &str>) -> Self {
+        self.operation = Operations::Update;
+        self.columns = values.into_iter()
+            .map(|(col, val)| format!("{} = '{}'", col, val))
+            .collect();
+        self
+    }
+    
     pub fn where_condition(mut self, condition: &str) -> Self {
         self.conditions.push(condition.to_string());
         self
@@ -133,6 +142,10 @@ impl QueryBuilder {
             Operations::Delete => "DELETE",
         };
 
+        if self.operation == Operations::Update && self.columns.is_empty() {
+            panic!("UPDATE operation requires at least one column to be set.");
+        }
+
         let columns = if self.columns.is_empty() {
             if self.operation == Operations::Delete {
                 "".to_string()
@@ -150,6 +163,11 @@ impl QueryBuilder {
             Operations::Insert | Operations::InsertIfNotExists => format!("{} {}", operation, full_table_name),
             Operations::Update => format!("{} {}", operation, full_table_name),
         };
+
+        if self.operation == Operations::Update && !self.columns.is_empty() {
+            query.push_str(" SET ");
+            query.push_str(&columns);
+        }
 
         if !self.conditions.is_empty() {
             query.push_str(" WHERE ");
