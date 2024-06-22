@@ -19,6 +19,11 @@ impl QueryBuilder {
         self
     }
 
+    pub fn delete(mut self) -> Self {
+        self.operation = Operations::Delete;
+        self
+    }
+
     pub fn where_condition(mut self, condition: &str) -> Self {
         self.conditions.push(condition.to_string());
         self
@@ -129,14 +134,19 @@ impl QueryBuilder {
         };
 
         let columns = if self.columns.is_empty() {
-            "*".to_string()
+            if self.operation == Operations::Delete {
+                "".to_string()
+            } else {
+                "*".to_string()
+            }
         } else {
             self.columns.join(", ")
         };
 
         let full_table_name = format!("{}.{}", self.keyspace, self.table);
         let mut query = match self.operation {
-            Operations::Select | Operations::Delete => format!("{} {} FROM {}", operation, columns, full_table_name),
+            Operations::Select => format!("{} {} FROM {}", operation, columns, full_table_name),
+            Operations::Delete => format!("{} FROM {}", operation, full_table_name),
             Operations::Insert | Operations::InsertIfNotExists => format!("{} {}", operation, full_table_name),
             Operations::Update => format!("{} {}", operation, full_table_name),
         };

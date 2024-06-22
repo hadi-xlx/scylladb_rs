@@ -11,7 +11,7 @@ pub struct QueryBuilder {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq )]
 pub enum Operations {
     Select,
     Insert,
