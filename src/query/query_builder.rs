@@ -1,3 +1,4 @@
+use serde_json::Value;
 use crate::query::query::*;
 use std::collections::HashMap;
 
@@ -32,7 +33,14 @@ impl QueryBuilder {
             .collect();
         self
     }
-    
+
+    pub fn insert(mut self, json_body: Value) -> Self {
+        self.operation = Operations::Insert;
+        let json_string = json_body.to_string();
+        self.clauses.push(format!("JSON '{}'", json_string));
+        self
+    }
+
     pub fn where_condition(mut self, condition: &str) -> Self {
         self.conditions.push(condition.to_string());
         self
@@ -141,11 +149,7 @@ impl QueryBuilder {
             Operations::Update => "UPDATE",
             Operations::Delete => "DELETE",
         };
-
-        if self.operation == Operations::Update && self.columns.is_empty() {
-            panic!("UPDATE operation requires at least one column to be set.");
-        }
-
+    
         let columns = if self.columns.is_empty() {
             if self.operation == Operations::Delete {
                 "".to_string()
@@ -155,25 +159,31 @@ impl QueryBuilder {
         } else {
             self.columns.join(", ")
         };
-
+    
         let full_table_name = format!("{}.{}", self.keyspace, self.table);
         let mut query = match self.operation {
             Operations::Select => format!("{} {} FROM {}", operation, columns, full_table_name),
             Operations::Delete => format!("{} FROM {}", operation, full_table_name),
-            Operations::Insert | Operations::InsertIfNotExists => format!("{} {}", operation, full_table_name),
+            Operations::Insert | Operations::InsertIfNotExists => {
+                if !self.clauses.is_empty() && self.clauses[0].starts_with("JSON") {
+                    format!("{} {} {}", operation, full_table_name, self.clauses.join(" "))
+                } else {
+                    format!("{} {}", operation, full_table_name)
+                }
+            },
             Operations::Update => format!("{} {}", operation, full_table_name),
         };
-
+    
         if self.operation == Operations::Update && !self.columns.is_empty() {
             query.push_str(" SET ");
             query.push_str(&columns);
         }
-
+    
         if !self.conditions.is_empty() {
             query.push_str(" WHERE ");
             query.push_str(&self.conditions.join(" AND "));
         }
-
+    
         if let Some((col, dir)) = self.order {
             let dir_str = match dir {
                 OrderDirection::Asc => "ASC",
@@ -181,12 +191,12 @@ impl QueryBuilder {
             };
             query.push_str(&format!(" ORDER BY {} {}", col, dir_str));
         }
-
-        if !self.clauses.is_empty() {
+    
+        if !self.clauses.is_empty() && !self.clauses[0].starts_with("JSON") {
             query.push_str(" ");
             query.push_str(&self.clauses.join(" "));
         }
-
+    
         if !self.insert_options.is_empty() {
             query.push_str(" USING ");
             let options: Vec<String> = self.insert_options.into_iter().map(|option| {
@@ -197,7 +207,8 @@ impl QueryBuilder {
             }).collect();
             query.push_str(&options.join(" AND "));
         }
-
+    
+        query.push(';');
         query
     }
 }
