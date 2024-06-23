@@ -6,6 +6,7 @@ use scylla::QueryResult;
 use std::error::Error;
 use std::future::Future;
 use std::pin::Pin;
+use std::fmt::Display;
 
 impl<'a> QueryBuilder<'a> {
     pub fn new(operation: Operations, keyspace: &str, table: &str, client: &'a ScyllaClient) -> Self {
@@ -76,77 +77,88 @@ impl<'a> QueryBuilder<'a> {
         self.client.session.query(query, &[]).await.map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)
     }
 
-
-    pub fn where_condition(mut self, condition: &str) -> Self {
-        self.conditions.push(condition.to_string());
-        self
+     fn add_filtering_clause(&mut self) {
+        if !self.clauses.contains(&"ALLOW FILTERING".to_string()) {
+            self.clauses.push("ALLOW FILTERING".to_string());
+        }
     }
 
-    pub fn eq(mut self, column: &str, value: &str) -> Self {
-        let condition = format!("{} = '{}'", column, value);
+    pub fn eq<T: Display>(mut self, column: &str, value: T) -> Self {
+        let condition = format!("{} = {}", column, format_value(value));
         self.conditions.push(condition);
+        self.add_filtering_clause();
         self
     }
 
-    pub fn neq(mut self, column: &str, value: &str) -> Self {
-        let condition = format!("{} != '{}'", column, value);
+    pub fn neq<T: Display>(mut self, column: &str, value: T) -> Self {
+        let condition = format!("{} != {}", column, format_value(value));
         self.conditions.push(condition);
+        self.add_filtering_clause();
         self
     }
 
-    pub fn gt(mut self, column: &str, value: &str) -> Self {
-        let condition = format!("{} > '{}'", column, value);
+    pub fn gt<T: Display>(mut self, column: &str, value: T) -> Self {
+        let condition = format!("{} > {}", column, format_value(value));
         self.conditions.push(condition);
+        self.add_filtering_clause();
         self
     }
 
-    pub fn gte(mut self, column: &str, value: &str) -> Self {
-        let condition = format!("{} >= '{}'", column, value);
+    pub fn gte<T: Display>(mut self, column: &str, value: T) -> Self {
+        let condition = format!("{} >= {}", column, format_value(value));
         self.conditions.push(condition);
+        self.add_filtering_clause();
         self
     }
 
-    pub fn lt(mut self, column: &str, value: &str) -> Self {
-        let condition = format!("{} < '{}'", column, value);
+    pub fn lt<T: Display>(mut self, column: &str, value: T) -> Self {
+        let condition = format!("{} < {}", column, format_value(value));
         self.conditions.push(condition);
+        self.add_filtering_clause();
         self
     }
 
-    pub fn lte(mut self, column: &str, value: &str) -> Self {
-        let condition = format!("{} <= '{}'", column, value);
+    pub fn lte<T: Display>(mut self, column: &str, value: T) -> Self {
+        let condition = format!("{} <= {}", column, format_value(value));
         self.conditions.push(condition);
+        self.add_filtering_clause();
         self
     }
 
-    pub fn in_list(mut self, column: &str, values: &[&str]) -> Self {
-        let value_list = values.join(", ");
+    pub fn in_list<T: Display>(mut self, column: &str, values: &[T]) -> Self {
+        let value_list = values.iter().map(|v| format_value(v)).collect::<Vec<_>>().join(", ");
         let condition = format!("{} IN ({})", column, value_list);
         self.conditions.push(condition);
+        self.add_filtering_clause();
         self
     }
 
-    pub fn not_in_list(mut self, column: &str, values: &[&str]) -> Self {
-        let value_list = values.join(", ");
+    pub fn not_in_list<T: Display>(mut self, column: &str, values: &[T]) -> Self {
+        let value_list = values.iter().map(|v| format_value(v)).collect::<Vec<_>>().join(", ");
         let condition = format!("{} NOT IN ({})", column, value_list);
         self.conditions.push(condition);
+        self.add_filtering_clause();
         self
     }
 
-    pub fn between(mut self, column: &str, lower: &str, upper: &str) -> Self {
-        let condition = format!("{} BETWEEN '{}' AND '{}'", column, lower, upper);
+    pub fn between<T: Display>(mut self, column: &str, lower: T, upper: T) -> Self {
+        let condition = format!("{} BETWEEN {} AND {}", column, format_value(lower), format_value(upper));
         self.conditions.push(condition);
+        self.add_filtering_clause();
         self
     }
 
-    pub fn not_between(mut self, column: &str, lower: &str, upper: &str) -> Self {
-        let condition = format!("{} NOT BETWEEN '{}' AND '{}'", column, lower, upper);
+    pub fn not_between<T: Display>(mut self, column: &str, lower: T, upper: T) -> Self {
+        let condition = format!("{} NOT BETWEEN {} AND {}", column, format_value(lower), format_value(upper));
         self.conditions.push(condition);
+        self.add_filtering_clause();
         self
     }
 
     pub fn like(mut self, column: &str, pattern: &str) -> Self {
         let condition = format!("{} LIKE '{}'", column, pattern);
         self.conditions.push(condition);
+        self.add_filtering_clause();
         self
     }
 
@@ -246,5 +258,13 @@ impl<'a> QueryBuilder<'a> {
 
         query.push(';');
         query
+    }
+}
+
+fn format_value<T: Display>(value: T) -> String {
+    if value.to_string().parse::<i64>().is_ok() {
+        value.to_string()
+    } else {
+        format!("'{}'", value)
     }
 }
