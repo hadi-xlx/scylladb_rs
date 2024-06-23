@@ -1,23 +1,46 @@
 use scylladb_rs::ScyllaClient;
 use scylladb_rs::query::query::*;
-use serde_json::json;
+use scylla::QueryResult;
 
 #[tokio::test]
 async fn integration_test() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
     let client: ScyllaClient = ScyllaClient::new(vec!["127.0.0.1"]).await?;
 
-    let query_builder = client.prepared_query("test", "test_table").await;
+    let query_builder: QueryBuilder = client.prepared_query("test", "test2_table").await;
 
-    let select_query = query_builder
-        .select(&["name", "is_active"])
-        .gte("age", 30)
+    // Test is_null method
+    let select_query5 = query_builder
+        .clone()
+        .select(&["*"])
+        .like("name","Jane Doe")
         .build();
 
-    println!("select query: {}", select_query);
+    let result5: QueryResult = client.session.query(select_query5, &[]).await?;
+    print_query_result("Result 5", &result5);
 
-    let result = client.session.query(select_query, &[]).await?;
 
-    println!("Data fetched: {:?}", result);
     Ok(())
 }
+
+fn print_query_result(label: &str, result: &QueryResult) {
+    println!("{}:", label);
+    if let Some(rows) = &result.rows {
+        for row in rows {
+            println!("{:?}", row);
+        }
+    } else {
+        println!("No rows found.");
+    }
+    if !result.warnings.is_empty() {
+        println!("Warnings: {:?}", result.warnings);
+    }
+    if let Some(tracing_id) = &result.tracing_id {
+        println!("Tracing ID: {:?}", tracing_id);
+    }
+    if let Some(paging_state) = &result.paging_state {
+        println!("Paging State: {:?}", paging_state);
+    }
+    println!("Column Specs: {:?}", result.col_specs);
+}
+

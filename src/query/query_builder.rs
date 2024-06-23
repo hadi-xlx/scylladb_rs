@@ -9,7 +9,12 @@ use std::pin::Pin;
 use std::fmt::Display;
 
 impl<'a> QueryBuilder<'a> {
-    pub fn new(operation: Operations, keyspace: &str, table: &str, client: &'a ScyllaClient) -> Self {
+    pub fn new(
+        operation: Operations,
+        keyspace: &str,
+        table: &str,
+        client: &'a ScyllaClient
+    ) -> Self {
         Self {
             operation,
             keyspace: keyspace.to_string(),
@@ -23,7 +28,10 @@ impl<'a> QueryBuilder<'a> {
         }
     }
     
-    pub fn select(mut self, columns: &[&str]) -> Self {
+    pub fn select(
+        mut self,
+        columns: &[&str]
+    ) -> Self {
         self.columns = columns.iter().map(|&col| col.to_string()).collect();
         self
     }
@@ -33,7 +41,10 @@ impl<'a> QueryBuilder<'a> {
         self
     }
 
-    pub fn update(mut self, values: HashMap<&str, &str>) -> Self {
+    pub fn update(
+        mut self,
+        values: HashMap<&str,&str>
+    ) -> Self {
         self.operation = Operations::Update;
         self.columns = values.into_iter()
             .map(|(col, val)| format!("{} = '{}'", col, val))
@@ -41,7 +52,10 @@ impl<'a> QueryBuilder<'a> {
         self
     }
 
-    pub fn insert<'b>(mut self, json_body: Value) -> Pin<Box<dyn Future<Output = Result<QueryResult, Box<dyn Error + Send + Sync>>> + Send + 'b>>
+    pub fn insert<'b>(
+        mut self,
+        json_body: Value
+    ) -> Pin<Box<dyn Future<Output = Result<QueryResult, Box<dyn Error + Send + Sync>>> + Send + 'b>>
     where 'a: 'b {
         Box::pin(async move {
             self.operation = Operations::Insert;
@@ -52,7 +66,10 @@ impl<'a> QueryBuilder<'a> {
         })
     }
 
-    pub fn insert_bulk<'b>(mut self, json_body: Value) -> Pin<Box<dyn Future<Output = Result<QueryResult, Box<dyn Error + Send + Sync>>> + Send + 'b>>
+    pub fn insert_bulk<'b>(
+        mut self,
+        json_body: Value
+    ) -> Pin<Box<dyn Future<Output = Result<QueryResult, Box<dyn Error + Send + Sync>>> + Send + 'b>>
     where 'a: 'b {
         Box::pin(async move {
             if let Some(records) = json_body.as_array() {
@@ -73,59 +90,84 @@ impl<'a> QueryBuilder<'a> {
         })
     }
 
-    pub async fn execute(&self, query: String) -> Result<QueryResult, Box<dyn Error + Send + Sync>> {
-        self.client.session.query(query, &[]).await.map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)
-    }
-
-     fn add_filtering_clause(&mut self) {
-        if !self.clauses.contains(&"ALLOW FILTERING".to_string()) {
-            self.clauses.push("ALLOW FILTERING".to_string());
-        }
-    }
-
-    pub fn eq<T: Display>(mut self, column: &str, value: T) -> Self {
+    //works
+    pub fn eq<T: Display>(
+        mut self,
+        column: &str,
+        value: T
+    ) -> Self {
         let condition = format!("{} = {}", column, format_value(value));
         self.conditions.push(condition);
         self.add_filtering_clause();
         self
     }
 
-    pub fn neq<T: Display>(mut self, column: &str, value: T) -> Self {
+    //doesnt work 
+    pub fn neq<T: Display>(
+        mut self,
+        column: &str,
+        value: T
+    ) -> Self {
         let condition = format!("{} != {}", column, format_value(value));
         self.conditions.push(condition);
         self.add_filtering_clause();
         self
     }
 
-    pub fn gt<T: Display>(mut self, column: &str, value: T) -> Self {
+    //works
+    pub fn gt<T: Display>(
+        mut self,
+        column: &str,
+        value: T
+    ) -> Self {
         let condition = format!("{} > {}", column, format_value(value));
         self.conditions.push(condition);
         self.add_filtering_clause();
         self
     }
 
-    pub fn gte<T: Display>(mut self, column: &str, value: T) -> Self {
+    //works
+    pub fn gte<T: Display>(
+        mut self,
+        column: &str,
+        value: T
+    ) -> Self {
         let condition = format!("{} >= {}", column, format_value(value));
         self.conditions.push(condition);
         self.add_filtering_clause();
         self
     }
 
-    pub fn lt<T: Display>(mut self, column: &str, value: T) -> Self {
+    //works
+    pub fn lt<T: Display>(
+        mut self,
+        column: &str,
+        value: T
+    ) -> Self {
         let condition = format!("{} < {}", column, format_value(value));
         self.conditions.push(condition);
         self.add_filtering_clause();
         self
     }
 
-    pub fn lte<T: Display>(mut self, column: &str, value: T) -> Self {
+    //works
+    pub fn lte<T: Display>(
+        mut self,
+        column: &str,
+        value: T
+    ) -> Self {
         let condition = format!("{} <= {}", column, format_value(value));
         self.conditions.push(condition);
         self.add_filtering_clause();
         self
     }
 
-    pub fn in_list<T: Display>(mut self, column: &str, values: &[T]) -> Self {
+    //works
+    pub fn in_list<T: Display>(
+        mut self,
+        column: &str,
+        values: &[T]
+    ) -> Self {
         let value_list = values.iter().map(|v| format_value(v)).collect::<Vec<_>>().join(", ");
         let condition = format!("{} IN ({})", column, value_list);
         self.conditions.push(condition);
@@ -133,62 +175,46 @@ impl<'a> QueryBuilder<'a> {
         self
     }
 
-    pub fn not_in_list<T: Display>(mut self, column: &str, values: &[T]) -> Self {
-        let value_list = values.iter().map(|v| format_value(v)).collect::<Vec<_>>().join(", ");
-        let condition = format!("{} NOT IN ({})", column, value_list);
+    //works
+    pub fn between<T: Display>(
+        mut self,
+        column: &str,
+        lower: T,
+        upper: T
+    ) -> Self {
+        let lower_condition = format!("{} > {}", column, format_value(lower));
+        let upper_condition = format!("{} < {}", column, format_value(upper));
+        self.conditions.push(lower_condition);
+        self.conditions.push(upper_condition);
+        self.add_filtering_clause();
+        self
+    }
+
+    //doesnt work, OR isnt supported maybe
+    pub fn not_between<T: Display>(
+        mut self,
+        column: &str,
+        lower: T,
+        upper: T
+    ) -> Self {
+        let condition = format!("{} < {} or {} > {}", column, format_value(lower), column, format_value(upper));
         self.conditions.push(condition);
         self.add_filtering_clause();
         self
     }
 
-    pub fn between<T: Display>(mut self, column: &str, lower: T, upper: T) -> Self {
-        let condition = format!("{} BETWEEN {} AND {}", column, format_value(lower), format_value(upper));
-        self.conditions.push(condition);
-        self.add_filtering_clause();
-        self
-    }
-
-    pub fn not_between<T: Display>(mut self, column: &str, lower: T, upper: T) -> Self {
-        let condition = format!("{} NOT BETWEEN {} AND {}", column, format_value(lower), format_value(upper));
-        self.conditions.push(condition);
-        self.add_filtering_clause();
-        self
-    }
-
-    pub fn like(mut self, column: &str, pattern: &str) -> Self {
+    //works
+    pub fn like(
+        mut self,
+        column: &str,
+        pattern: &str
+    ) -> Self {
         let condition = format!("{} LIKE '{}'", column, pattern);
         self.conditions.push(condition);
         self.add_filtering_clause();
         self
     }
-
-    pub fn is_null(mut self, column: &str) -> Self {
-        let condition = format!("{} IS NULL", column);
-        self.conditions.push(condition);
-        self
-    }
-
-    pub fn is_not_null(mut self, column: &str) -> Self {
-        let condition = format!("{} IS NOT NULL", column);
-        self.conditions.push(condition);
-        self
-    }
-
-    pub fn clause(mut self, clause: &str) -> Self {
-        self.clauses.push(clause.to_string());
-        self
-    }
-
-    pub fn order_by(mut self, column: &str, direction: OrderDirection) -> Self {
-        self.order = Some((column.to_string(), direction));
-        self
-    }
-
-    pub fn insert_option(mut self, option: InsertOptions) -> Self {
-        self.insert_options.push(option);
-        self
-    }
-
+    
     pub fn build(&self) -> String {
         let operation = match self.operation {
             Operations::Select => "SELECT",
@@ -257,14 +283,58 @@ impl<'a> QueryBuilder<'a> {
         }
 
         query.push(';');
+        println!("\nquery: {}\n", query);
         query
+    }
+
+    fn add_filtering_clause(&mut self) {
+        if !self.clauses.contains(&"ALLOW FILTERING".to_string()) {
+            self.clauses.push("ALLOW FILTERING".to_string());
+        }
+    }
+
+    pub async fn execute(
+        &self,
+        query: String
+    ) -> Result<QueryResult, Box<dyn Error + Send + Sync>> {
+        self.client.session.query(query, &[]).await.map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)
+    }
+
+    pub fn clause(
+        mut self,
+        clause: &str
+    ) -> Self {
+        self.clauses.push(clause.to_string());
+        self
+    }
+
+    pub fn order_by(
+        mut self,
+        column: &str,
+        direction: OrderDirection
+    ) -> Self {
+        self.order = Some((column.to_string(), direction));
+        self
+    }
+
+    pub fn insert_option(
+        mut self,
+        option: InsertOptions
+    ) -> Self {
+        self.insert_options.push(option);
+        self
     }
 }
 
 fn format_value<T: Display>(value: T) -> String {
-    if value.to_string().parse::<i64>().is_ok() {
-        value.to_string()
+    let value_str = value.to_string();
+    if value_str.parse::<i64>().is_ok() {
+        value_str
+    } else if value_str == "true" {
+        "True".to_string()
+    } else if value_str == "false" {
+        "False".to_string()
     } else {
-        format!("'{}'", value)
+        format!("'{}'", value_str)
     }
 }
