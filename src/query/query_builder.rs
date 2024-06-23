@@ -4,6 +4,8 @@ use std::collections::HashMap;
 use crate::ScyllaClient;
 use scylla::QueryResult;
 use std::error::Error;
+use std::future::Future;
+use std::pin::Pin;
 
 impl<'a> QueryBuilder<'a> {
     pub fn new(operation: Operations, keyspace: &str, table: &str, client: &'a ScyllaClient) -> Self {
@@ -38,13 +40,16 @@ impl<'a> QueryBuilder<'a> {
         self
     }
 
-    pub fn insert(mut self, json_body: Value) -> Self {
-        self.operation = Operations::Insert;
-        let json_string = json_body.to_string();
-        self.clauses.push(format!("JSON '{}'", json_string));
-        self
+    pub fn insert<'b>(mut self, json_body: Value) -> Pin<Box<dyn Future<Output = Result<QueryResult, Box<dyn Error + Send + Sync>>> + Send + 'b>>
+    where 'a: 'b {
+        Box::pin(async move {
+            self.operation = Operations::Insert;
+            let json_string = json_body.to_string();
+            self.clauses.push(format!("JSON '{}'", json_string));
+            let query = self.build();
+            self.client.session.query(query, &[]).await.map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)
+        })
     }
-
     pub async fn execute(&self, query: String) -> Result<QueryResult, Box<dyn Error + Send + Sync>> {
         self.client.session.query(query, &[]).await.map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)
     }
