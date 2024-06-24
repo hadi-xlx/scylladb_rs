@@ -7,7 +7,7 @@ use std::error::Error;
 use std::future::Future;
 use std::pin::Pin;
 use std::fmt::Display;
-
+use uuid::Uuid;
 impl<'a> QueryBuilder<'a> {
     pub fn new(
         operation: Operations,
@@ -288,7 +288,7 @@ impl<'a> QueryBuilder<'a> {
     }
 
     fn add_filtering_clause(&mut self) {
-        if !self.clauses.contains(&"ALLOW FILTERING".to_string()) {
+        if self.operation != Operations::Delete && !self.clauses.contains(&"ALLOW FILTERING".to_string()) {
             self.clauses.push("ALLOW FILTERING".to_string());
         }
     }
@@ -327,14 +327,15 @@ impl<'a> QueryBuilder<'a> {
 }
 
 fn format_value<T: Display>(value: T) -> String {
-    let value_str = value.to_string();
-    if value_str.parse::<i64>().is_ok() {
-        value_str
-    } else if value_str == "true" {
+    if value.to_string().parse::<Uuid>().is_ok() {
+        value.to_string()
+    } else if value.to_string().parse::<i64>().is_ok() {
+        value.to_string()
+    } else if value.to_string() == "true" {
         "True".to_string()
-    } else if value_str == "false" {
+    } else if value.to_string() == "false" {
         "False".to_string()
     } else {
-        format!("'{}'", value_str)
+        format!("'{}'", value.to_string())
     }
 }
