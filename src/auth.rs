@@ -2,7 +2,7 @@ use scylla::{Session, SessionBuilder};
 use std::error::Error;
 
 use crate::ScyllaClient;
-use crate::query::query::{QueryBuilder, Operations};
+use crate::{QueryBuilder, Operations};
 
 impl ScyllaClient {
 

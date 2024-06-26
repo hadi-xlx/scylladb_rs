@@ -1,5 +1,5 @@
 use scylladb_rs::ScyllaClient;
-use scylladb_rs::query::query::*;
+use scylladb_rs::QueryBuilder;
 use scylla::QueryResult;
 use uuid::Uuid;
 use std::str::FromStr;
@@ -15,7 +15,7 @@ async fn integration_test() -> Result<(), Box<dyn std::error::Error + Send + Syn
     let select_query5 = query_builder
         .clone()
         .delete()
-        .eq("id",Uuid::from_str("52832c68-e574-414f-85f3-514e26edb88c").unwrap())
+        .eq("age",1)
         .build();
 
     let result5: QueryResult = client.session.query(select_query5, &[]).await?;
