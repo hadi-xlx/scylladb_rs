@@ -5,8 +5,16 @@ use crate::{
     OrderDirection
     ,InsertOptions
 };
+use scylla::QueryResult;
+use scylla::transport::errors::QueryError;
 
 impl<'a> QueryBuilder<'a> {
+
+    pub async fn execute(self) -> Result<QueryResult, QueryError> {
+        let query_string = self.build();
+        let result = self.client.session.query(query_string, &[]).await?;
+        Ok(result)
+    }
     
     pub fn build(&self) -> String {
         let operation = match self.operation {
@@ -86,30 +94,18 @@ impl<'a> QueryBuilder<'a> {
         }
     }
 
-
-    pub fn clause(
-        mut self,
-        clause: &str
-    ) -> Self {
+    pub fn clause(mut self, clause: &str) -> Self {
         self.clauses.push(clause.to_string());
         self
     }
 
-    pub fn order_by(
-        mut self,
-        column: &str,
-        direction: OrderDirection
-    ) -> Self {
+    pub fn order_by(mut self, column: &str, direction: OrderDirection) -> Self {
         self.order = Some((column.to_string(), direction));
         self
     }
 
-    pub fn insert_option(
-        mut self,
-        option: InsertOptions
-    ) -> Self {
+    pub fn insert_option(mut self, option: InsertOptions) -> Self {
         self.insert_options.push(option);
         self
     }
 }
-

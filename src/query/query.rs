@@ -68,7 +68,7 @@ impl<'a> QueryBuilder<'a> {
             let json_string = json_body.to_string();
             self.clauses.push(format!("JSON '{}'", json_string));
             let query = self.build();
-            self.client.session.query(query, &[]).await.map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)
+            self.client.session.query(query, &[]).await.map_err(|e: scylla::transport::errors::QueryError| Box::new(e) as Box<dyn Error + Send + Sync>)
         })
     }
 
