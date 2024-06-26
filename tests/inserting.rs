@@ -1,9 +1,6 @@
 
 use serde_json::json;
 
-use scylla::QueryResult;
-use scylla::transport::errors::QueryError;
-
 use scylladb_rs::ScyllaClient;
 use scylladb_rs::query::utils::print_query_result;
 
