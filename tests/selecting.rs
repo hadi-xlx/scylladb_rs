@@ -1,8 +1,7 @@
 use scylladb_rs::ScyllaClient;
 use scylladb_rs::QueryBuilder;
 use scylla::QueryResult;
-use uuid::Uuid;
-use std::str::FromStr;
+
 
 #[tokio::test]
 async fn integration_test() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
