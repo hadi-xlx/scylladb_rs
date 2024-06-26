@@ -14,6 +14,7 @@ use crate::{
 };
 
 impl<'a> QueryBuilder<'a> {
+    
     pub fn new(
         operation: Operations,
         keyspace: &str,

@@ -21,7 +21,7 @@ impl ScyllaClient {
         Ok(ScyllaClient { session })
     }
 
-    pub async fn prepared_query(&self, keyspace: &str, table: &str) -> QueryBuilder<'_> {
+    pub fn query(&self, keyspace: &str, table: &str) -> QueryBuilder<'_> {
         QueryBuilder::new(Operations::Select, keyspace, table, self)
     }
 }

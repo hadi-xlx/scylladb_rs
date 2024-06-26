@@ -8,16 +8,16 @@ async fn integration_test() -> Result<(), Box<dyn std::error::Error + Send + Syn
     
     let client: ScyllaClient = ScyllaClient::new(vec!["127.0.0.1"]).await?;
 
-    let query_builder: QueryBuilder = client.prepared_query("test", "test2_table").await;
+    let query_builder: QueryBuilder = client
+    .query("test", "test2_table");
 
     // Test is_null method
-    let select_query5 = query_builder
-        .clone()
-        .delete()
-        .eq("age",1)
+    let select_query = query_builder
+        .select(&["name", "age"])
+        .eq("age",10)
         .build();
 
-    let result5: QueryResult = client.session.query(select_query5, &[]).await?;
+    let result5: QueryResult = client.session.query(select_query, &[]).await?;
     print_query_result("Result 5", &result5);
 
 
