@@ -4,7 +4,6 @@ use scylla::transport::errors::QueryError;
 use scylladb_rs::ScyllaClient;
 use scylladb_rs::query::utils::print_query_result;
 
-
 #[tokio::test]
 async fn selecting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     

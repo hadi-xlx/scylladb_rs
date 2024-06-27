@@ -61,7 +61,7 @@ impl<'a> QueryBuilder<'a> {
                         _ => return Err("Expected 'id' to be a string".into())
                     };
                     
-                    let set_clause = map.iter()
+                    let set_clause: String = map.iter()
                         .filter(|(col, _)| *col != "id")
                         .map(|(col, val)| {
                             match val {
@@ -97,7 +97,7 @@ impl<'a> QueryBuilder<'a> {
     where 'a: 'b {
         Box::pin(async move {
             self.operation = Operations::Insert;
-            let json_string = json_body.to_string();
+            let json_string: String = json_body.to_string();
             self.clauses.push(format!("JSON '{}'", json_string));
             let query = self.build();
             self.client.session.query(query, &[]).await.map_err(|e: scylla::transport::errors::QueryError| Box::new(e) as Box<dyn Error + Send + Sync>)
@@ -115,8 +115,8 @@ impl<'a> QueryBuilder<'a> {
                 let mut batch_query = String::from("BEGIN BATCH ");
 
                 for record in records {
-                    let json_string = record.to_string();
-                    let query = format!("INSERT INTO {}.{} JSON '{}';", self.keyspace, self.table, json_string);
+                    let json_string: String = record.to_string();
+                    let query: String = format!("INSERT INTO {}.{} JSON '{}';", self.keyspace, self.table, json_string);
                     batch_query.push_str(&query);
                 }
 

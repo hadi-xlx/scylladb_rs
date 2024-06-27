@@ -11,13 +11,13 @@ use scylla::transport::errors::QueryError;
 impl<'a> QueryBuilder<'a> {
 
     pub async fn execute(self) -> Result<QueryResult, QueryError> {
-        let query_string = self.build();
-        let result = self.client.session.query(query_string, &[]).await?;
+        let query_string: String = self.build();
+        let result: QueryResult = self.client.session.query(query_string, &[]).await?;
         Ok(result)
     }
     
     pub fn build(&self) -> String {
-        let operation = match self.operation {
+        let operation: &str = match self.operation {
             Operations::Select => "SELECT",
             Operations::Insert => "INSERT INTO",
             Operations::InsertIfNotExists => "INSERT IF NOT EXISTS",
@@ -25,7 +25,7 @@ impl<'a> QueryBuilder<'a> {
             Operations::Delete => "DELETE",
         };
 
-        let columns = if self.columns.is_empty() {
+        let columns: String = if self.columns.is_empty() {
             if self.operation == Operations::Delete {
                 "".to_string()
             } else {
@@ -35,7 +35,7 @@ impl<'a> QueryBuilder<'a> {
             self.columns.join(", ")
         };
 
-        let full_table_name = format!("{}.{}", self.keyspace, self.table);
+        let full_table_name: String = format!("{}.{}", self.keyspace, self.table);
         let mut query = match self.operation {
             Operations::Select => format!("{} {} FROM {}", operation, columns, full_table_name),
             Operations::Delete => format!("{} FROM {}", operation, full_table_name),

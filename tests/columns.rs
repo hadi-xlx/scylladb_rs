@@ -18,7 +18,6 @@ async fn creating_column() -> Result<(), Box<dyn std::error::Error + Send + Sync
     Ok(())
 }
 
-
 #[tokio::test]
 async fn dropping_column() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
