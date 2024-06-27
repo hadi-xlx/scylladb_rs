@@ -27,9 +27,15 @@ impl<'a> QueryBuilder<'a> {
             order: None,
             insert_options: Vec::new(),
             client,
+            allow_filtering: false,
         }
     }
-    
+
+    pub fn allow_filtering(mut self) -> Self {
+        self.allow_filtering = true;
+        self
+    }
+
     pub async fn execute(self) -> Result<QueryResult, QueryError> {
         let query_string: String = self.build();
         let result: QueryResult = self.client.session.query(query_string, &[]).await?;
@@ -96,6 +102,11 @@ impl<'a> QueryBuilder<'a> {
             query.push_str(&self.clauses.join(" "));
         }
 
+        // Add ALLOW FILTERING if allow_filtering is true
+        if self.allow_filtering {
+            query.push_str(" ALLOW FILTERING");
+        }
+
         if !self.insert_options.is_empty() {
             query.push_str(" USING ");
             let options: Vec<String> = self.insert_options.iter().map(|option| {
@@ -110,12 +121,6 @@ impl<'a> QueryBuilder<'a> {
         query.push(';');
         println!("\nquery: {}\n", query);
         query
-    }
-
-    pub fn add_filtering_clause(&mut self) {
-        if self.operation != Operations::Delete && !self.clauses.contains(&"ALLOW FILTERING".to_string()) {
-            self.clauses.push("ALLOW FILTERING".to_string());
-        }
     }
 
     pub fn clause(mut self, clause: &str) -> Self {

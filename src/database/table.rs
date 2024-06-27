@@ -2,7 +2,6 @@ use std::error::Error;
 
 use serde_json::{json, Value};
 
-use scylla::transport::errors::QueryError;
 use scylla::QueryResult;
 use scylla::IntoTypedRows;
 
@@ -86,40 +85,6 @@ impl ScyllaClient {
         self.session.query(query,()).await?;
 
         Ok(())
-    }
-
-    // Check for duplicates in a column of the table
-    pub async fn check_duplicates(
-        &self,
-        keyspace: &str,
-        table: &str,
-        column: &str
-    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
-
-        // Simplify the query for debugging
-        let query: String = format!(
-            "SELECT {}, COUNT(*) as count FROM {}.{} GROUP BY {} HAVING COUNT(*) > 1",
-            column, keyspace, table, column
-        );
-
-        println!("Executing query: {}", query); // Debugging output
-
-        let query_result: Result<QueryResult, QueryError> = self.session.query(query, ()).await;
-
-        match query_result {
-            Ok(result) => {
-                let rows = result.rows.ok_or("No rows found")?;
-                for row in rows.iter() {
-                    println!("Row: {:?}", row); // Debugging output
-                }
-                let has_duplicates = !rows.is_empty();
-                Ok(has_duplicates)
-            }
-            Err(e) => {
-                eprintln!("Query error: {:?}", e); // Debugging output
-                Err(Box::new(e))
-            }
-        }
     }
 
     pub async fn count_rows(

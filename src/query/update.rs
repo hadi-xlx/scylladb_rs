@@ -3,6 +3,7 @@ use std::error::Error;
 use std::future::Future;
 use std::pin::Pin;
 use std::fmt::Display;
+use std::collections::HashMap;
 
 use serde_json::Value;
 use scylla::QueryResult;
@@ -18,8 +19,7 @@ impl<'a> QueryBuilder<'a> {
     
     pub fn update<T: Display + Send + 'a>(
         mut self,
-        primary_key_name: &'a str,
-        primary_key_value: T,
+        key_values: HashMap<&'a str, T>,
         json_body: Value
     ) -> Pin<Box<dyn Future<Output = Result<QueryResult, Box<dyn Error + Send + Sync>>> + Send + 'a>> {
         Box::pin(async move {
@@ -36,13 +36,18 @@ impl<'a> QueryBuilder<'a> {
                     .collect::<Vec<_>>()
                     .join(", ");
                 
+                let where_clause: String = key_values
+                    .iter()
+                    .map(|(key, value)| format!("{} = {}", key, format_value(value)))
+                    .collect::<Vec<_>>()
+                    .join(" AND ");
+                
                 let query = format!(
-                    "UPDATE {}.{} SET {} WHERE {} = {};",
+                    "UPDATE {}.{} SET {} WHERE {};",
                     self.keyspace,
                     self.table,
                     set_clause,
-                    primary_key_name,
-                    format_value(primary_key_value)
+                    where_clause
                 );
                 
                 self.client

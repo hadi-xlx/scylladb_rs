@@ -1,7 +1,8 @@
+use std::collections::HashMap;
+
 use serde_json::json;
 
 use scylladb_rs::ScyllaClient;
-use scylladb_rs::query::utils::print_query_result;
 
 #[tokio::test]
 async fn updating() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -10,21 +11,24 @@ async fn updating() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     let json_body = json!(
         {
-            "score": 100.0
+            "score": 66.0
         }
     );
+
+    let mut primary_keys: HashMap<&str, i32> = HashMap::new();
+    primary_keys.insert("age", 44);
+    primary_keys.insert("user_id", 2);
 
     let update = client
         .query("test_keyspace", "test_table")
         .update(
-            "age",
-            22,
+            primary_keys,
             json_body
         )
         .await;
 
     match &update {
-        Ok(query_result) => print_query_result("Query 1:", query_result),
+        Ok(query_result) => println!("Query Succecsfull: {:?}", query_result),
         Err(e) => println!("Query 1 failed: {:?}", e),
     }
 

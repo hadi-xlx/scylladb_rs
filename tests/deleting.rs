@@ -2,7 +2,6 @@ use scylla::QueryResult;
 use scylla::transport::errors::QueryError;
 
 use scylladb_rs::ScyllaClient;
-use scylladb_rs::query::utils::print_query_result;
 
 #[tokio::test]
 async fn deleting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -18,7 +17,7 @@ async fn deleting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .await;
 
     match &delete_query {
-        Ok(query_result) => print_query_result("Query:", query_result),
+        Ok(query_result) => println!("Query Succecsfull: {:?}", query_result),
         Err(e) => println!("Query 1failed: {:?}", e),
     }
     Ok(())
@@ -37,7 +36,7 @@ async fn in_list_deleting() -> Result<(), Box<dyn std::error::Error + Send + Syn
         .await;
 
     match &delete_query {
-        Ok(query_result) => print_query_result("Query:", query_result),
+        Ok(query_result) => println!("Query Succecsfull: {:?}", query_result),
         Err(e) => println!("Query failed: {:?}", e),
     }
 

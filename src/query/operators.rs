@@ -12,19 +12,18 @@ impl<'a> QueryBuilder<'a> {
     ) -> Self {
         let condition: String = format!("{} = {}", column, format_value(value));
         self.conditions.push(condition);
-        self.add_filtering_clause();
         self
     }
 
-    //doesnt work 
-    pub fn neq<T: Display>(
+    //doesnt work
+    #[allow(dead_code)] 
+    fn neq<T: Display>(
         mut self,
         column: &str,
         value: T
     ) -> Self {
         let condition: String = format!("{} != {}", column, format_value(value));
         self.conditions.push(condition);
-        self.add_filtering_clause();
         self
     }
 
@@ -36,7 +35,6 @@ impl<'a> QueryBuilder<'a> {
     ) -> Self {
         let condition: String = format!("{} > {}", column, format_value(value));
         self.conditions.push(condition);
-        self.add_filtering_clause();
         self
     }
 
@@ -48,7 +46,6 @@ impl<'a> QueryBuilder<'a> {
     ) -> Self {
         let condition: String = format!("{} >= {}", column, format_value(value));
         self.conditions.push(condition);
-        self.add_filtering_clause();
         self
     }
 
@@ -60,7 +57,6 @@ impl<'a> QueryBuilder<'a> {
     ) -> Self {
         let condition: String = format!("{} < {}", column, format_value(value));
         self.conditions.push(condition);
-        self.add_filtering_clause();
         self
     }
 
@@ -72,7 +68,6 @@ impl<'a> QueryBuilder<'a> {
     ) -> Self {
         let condition: String = format!("{} <= {}", column, format_value(value));
         self.conditions.push(condition);
-        self.add_filtering_clause();
         self
     }
 
@@ -85,7 +80,6 @@ impl<'a> QueryBuilder<'a> {
         let value_list: String = values.iter().map(|v| format_value(v)).collect::<Vec<_>>().join(", ");
         let condition: String = format!("{} IN ({})", column, value_list);
         self.conditions.push(condition);
-        self.add_filtering_clause();
         self
     }
 
@@ -100,7 +94,6 @@ impl<'a> QueryBuilder<'a> {
         let upper_condition: String = format!("{} < {}", column, format_value(upper));
         self.conditions.push(lower_condition);
         self.conditions.push(upper_condition);
-        self.add_filtering_clause();
         self
     }
 
@@ -112,7 +105,6 @@ impl<'a> QueryBuilder<'a> {
     ) -> Self {
         let condition: String = format!("{} LIKE '{}'", column, pattern);
         self.conditions.push(condition);
-        self.add_filtering_clause();
         self
     }
 

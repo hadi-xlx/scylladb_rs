@@ -4,7 +4,6 @@ use std::error::Error;
 use serde_json::json;
 
 use scylladb_rs::ScyllaClient;
-use scylladb_rs::query::utils::print_query_result;
 
 #[tokio::test]
 async fn bulk_inserting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -41,7 +40,7 @@ async fn bulk_inserting() -> Result<(), Box<dyn std::error::Error + Send + Sync>
         .await;
 
     match &insert_bulk {
-        Ok(query_result) => print_query_result("Query:", query_result),
+        Ok(query_result) => println!("Query Succecsfull: {:?}", query_result),
         Err(e) => println!("Query failed: {:?}", e),
     }
 

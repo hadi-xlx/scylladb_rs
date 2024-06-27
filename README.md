@@ -45,15 +45,7 @@
 
 
 ## Features
-- [**`Insert`**](#insert): Add new rows to a table.
-- [**`Insert if unique`**](#insert-if-unique): Add a new row only if it does not violate a UNIQUE constraint.
-- [**`Insert bulk`**](#insert-if-exists): Add multiple enw rows to a table.
-- [**`Update`**](#update): Modify existing rows in a table based on a unique identifier.
-- [**`Select`**](#select): Insert a new row into a table if it does not exist, or update it if it does.
-- [**`Select with count`**](#select-with-count): Select rows from a table and count the number of rows that match the filter criteria.
-- [**`Select with filter`**](#select-with-filter): Select rows from a table based on a filter criteria.
-- [**`Select with filter and count`**](#selecting-with-filter-and-count): Select rows from a table based on a filter criteria and count the number of rows that match the filter criteria.
-- [**`Delete`**](#delete): Delete a row from a table based on a unique identifier.
+
 
 ## Cargo.toml
 ```toml
