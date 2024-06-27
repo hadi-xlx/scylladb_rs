@@ -2,8 +2,8 @@ use std::error::Error;
 
 use serde_json::{json, Value};
 
+use scylla::transport::errors::QueryError;
 use scylla::QueryResult;
-use scylla::transport::query_result::RowsExpectedError;
 use scylla::IntoTypedRows;
 
 use crate::ScyllaClient;
@@ -96,17 +96,29 @@ impl ScyllaClient {
         column: &str
     ) -> Result<bool, Box<dyn Error + Send + Sync>> {
 
+        // Simplify the query for debugging
         let query: String = format!(
-        "SELECT {}, COUNT(*) FROM {}.{} GROUP BY {} HAVING COUNT(*) > 1",
-        column, keyspace, table, column);
+            "SELECT {}, COUNT(*) as count FROM {}.{} GROUP BY {} HAVING COUNT(*) > 1",
+            column, keyspace, table, column
+        );
 
-        let query_result: QueryResult = self.session.query(query, ()).await?;
+        println!("Executing query: {}", query); // Debugging output
 
-        let rows_count: Result<usize,RowsExpectedError>  = query_result.rows_num();
+        let query_result: Result<QueryResult, QueryError> = self.session.query(query, ()).await;
 
-        match rows_count {
-            Ok(count) => Ok(count > 1),
-            Err(e) => Err(Box::new(e)),
+        match query_result {
+            Ok(result) => {
+                let rows = result.rows.ok_or("No rows found")?;
+                for row in rows.iter() {
+                    println!("Row: {:?}", row); // Debugging output
+                }
+                let has_duplicates = !rows.is_empty();
+                Ok(has_duplicates)
+            }
+            Err(e) => {
+                eprintln!("Query error: {:?}", e); // Debugging output
+                Err(Box::new(e))
+            }
         }
     }
 
@@ -115,19 +127,17 @@ impl ScyllaClient {
         keyspace: &str,
         table: &str
     ) -> Result<i64, Box<dyn Error + Send + Sync>> {
-
         let query: String = format!(
-        "SELECT COUNT(*) FROM {}.{}",
-        keyspace, table);
+            "SELECT COUNT(*) FROM {}.{}",
+            keyspace, table
+        );
 
-        let query_result: QueryResult  = self.session.query(query, ()).await?;
+        let query_result: QueryResult = self.session.query(query, ()).await?;
 
-        let rows_count: Result<usize,RowsExpectedError> = query_result.rows_num();
+        let rows = query_result.rows.ok_or("No rows found")?;
+        let count_row = rows.into_typed::<(i64,)>().next().ok_or("No count row found")??;
 
-        match rows_count {
-            Ok(count) => Ok(count as i64),
-            Err(e) => Err(Box::new(e)),
-        }
+        Ok(count_row.0)
     }
 
     pub async fn truncate_table(

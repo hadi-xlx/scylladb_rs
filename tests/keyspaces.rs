@@ -33,3 +33,13 @@ async fn getting_keyspace_tables() -> Result<(), Box<dyn std::error::Error + Sen
     Ok(())
 }
 
+#[tokio::test]
+async fn getting_keyspace_materialized_views() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let client: ScyllaClient = ScyllaClient::new(vec!["127.0.0.1"]).await?;
+
+    let tables: serde_json::Value = client.get_keyspace_materialized_views("test_keyspace").await?;
+
+    println!("{:?}", tables);
+
+    Ok(())
+}

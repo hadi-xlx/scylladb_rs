@@ -16,6 +16,8 @@
 - [x] Select
 - [x] Applying Filters
 - [ ] Counting total records
+- [ ] User defined functions (UDF)
+- [ ] User defined types
 
 
 ## Advanced Filtering over `select()`

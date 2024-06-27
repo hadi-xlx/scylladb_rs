@@ -83,6 +83,29 @@ impl ScyllaClient{
         Ok(json_result)
     }
 
+    pub async fn get_keyspace_materialized_views(
+        &self,
+        keyspace: &str
+    ) -> Result<Value, Box<dyn Error + Send + Sync>> {
+        let query = format!(
+            "SELECT view_name FROM system_schema.views WHERE keyspace_name = '{}'",
+            keyspace
+        );
+
+        let result = self.session.query(query, ()).await?;
+        let rows = result.rows.ok_or("No rows found")?;
+        let view_names: Vec<String> = rows.into_typed::<(String,)>()
+            .map(|row| row.map(|(view_name,)| view_name))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let json_result = json!({
+            "keyspace": keyspace,
+            "materialized_views": view_names,
+        });
+
+        Ok(json_result)
+    }
+
 }
 
 
