@@ -4,7 +4,11 @@
 
 ## Database Features
 
-- [x] Updating
+- [x] Creating & dropping keyspaces
+- [x] Creating & dropping tables
+- [x] Creating & dropping materialized views
+- [x] Creating & dropping columns
+- [x] Creating & dropping indexes
 - [x] Inserting
 - [ ] Inserting if unique
 - [x] Bulk Inserting
@@ -12,6 +16,7 @@
 - [x] Select
 - [x] Applying Filters
 - [ ] Counting total records
+
 
 ## Advanced Filtering over `select()`
 
@@ -27,6 +32,14 @@
 - [ ] Order the results
 - [ ] Limit the number of rows returned
 - [ ] Retrieve as a CSV
+
+
+## Advanced table operations `create_table()`
+
+- [x] defining partition keys
+- [ ] defining clustering keys
+- [x] defining optional sorting
+- [x] defining optional ttl (time to live)
 
 
 # Scylla SDK for Rust
@@ -75,6 +88,8 @@ async fn intiliaze_client_and_select() -> Result<(), Box<dyn std::error::Error +
         Ok(query_result) => print_query_result("Query Result:", query_result),
         Err(e) => println!("Query failed: {:?}", e),
     }
+
+    Ok(())
 }
 ```
 This will initialize the Scylla Client perferm a Select query and then print the result.
