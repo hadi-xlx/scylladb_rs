@@ -4,7 +4,7 @@ use crate::ScyllaClient;
 
 impl ScyllaClient  {
 
-    pub async fn create_materialized_view(
+    pub async fn create_mv(
         &self,
         keyspace: &str,
         materialized_view: &str,
@@ -23,7 +23,7 @@ impl ScyllaClient  {
         Ok(())
     }
 
-    pub async fn drop_materialized_view(
+    pub async fn drop_mv(
         &self,
         keyspace: &str,
         materialized_view: &str,

@@ -5,7 +5,7 @@ use crate::ScyllaClient;
 
 impl ScyllaClient{
 
-    pub async fn create_keyspace_simple(
+    pub async fn create_ks_simple(
         &self,
         keyspace: &str,
         replication_factor: u64
@@ -20,7 +20,7 @@ impl ScyllaClient{
         Ok(())
     }
 
-    pub async fn create_keyspace_network(
+    pub async fn create_ks_network(
         &self,
         keyspace: &str,
         datacenters: HashMap<&str, u64>
@@ -42,7 +42,7 @@ impl ScyllaClient{
         Ok(())
     }
 
-    pub async fn drop_keyspace(
+    pub async fn drop_ks(
         &self,
         keyspace: &str
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
