@@ -47,15 +47,47 @@ impl<'a> QueryBuilder<'a> {
         self
     }
 
+
     pub fn update(
         mut self,
-        values: HashMap<&str,&str>
-    ) -> Self {
-        self.operation = Operations::Update;
-        self.columns = values.into_iter()
-            .map(|(col, val)| format!("{} = '{}'", col, val))
-            .collect();
-        self
+        json_body: Value
+    ) -> Pin<Box<dyn Future<Output = Result<QueryResult, Box<dyn Error + Send + Sync>>> + Send + 'a>> {
+        Box::pin(async move {
+            self.operation = Operations::Update;
+            if let Some(map) = json_body.as_object() {
+                if let Some(id_value) = map.get("id") {
+                    let id_string = match id_value {
+                        Value::String(s) => s.clone(),
+                        _ => return Err("Expected 'id' to be a string".into())
+                    };
+                    
+                    let set_clause = map.iter()
+                        .filter(|(col, _)| *col != "id")
+                        .map(|(col, val)| {
+                            match val {
+                                Value::String(s) => format!("{} = '{}'", col, s),
+                                Value::Number(n) => format!("{} = {}", col, n),
+                                Value::Bool(b) => format!("{} = {}", col, b),
+                                _ => format!("{} = '{}'", col, val) // Fallback for other types
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    let query = format!(
+                        "UPDATE {}.{} SET {} WHERE id = {};",
+                        self.keyspace,
+                        self.table,
+                        set_clause,
+                        id_string
+                    );
+                    self.client.session.query(query, &[]).await.map_err(|e| Box::new(e) as Box<dyn Error + Send + Sync>)
+                } else {
+                    Err("JSON object must contain 'id' key".into())
+                }
+            } else {
+                Err("Expected a JSON object".into())
+            }
+        })
     }
 
     pub fn insert<'b>(
