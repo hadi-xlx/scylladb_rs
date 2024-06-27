@@ -14,7 +14,8 @@ async fn inserting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         "user_id": 3,
         "age": 44,
         "name": "Jane Doe the third",
-        "score": 71.6
+        "score": 71.6,
+        "is_active": true
     });
 
 

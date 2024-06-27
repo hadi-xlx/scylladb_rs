@@ -12,7 +12,7 @@
 - [x] Inserting
 - [ ] Inserting if unique
 - [x] Bulk Inserting
-- [x] Delete (only per primary keys)
+- [x] Delete (only with primary keys) (all primary keys must be provided)
 - [x] Select
 - [x] Applying Filters
 - [ ] Counting total records

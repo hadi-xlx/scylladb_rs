@@ -4,15 +4,13 @@ use scylladb_rs::ScyllaClient;
 async fn creating_column() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
     let client: ScyllaClient = ScyllaClient::new(vec!["127.0.0.1"]).await?;
-    println!("Connected to ScyllaDB");
-
 
     // Add a column
     client.create_column(
         "test_keyspace",
         "test_table",
-        "email",
-        "text"
+        "is_active",
+        "boolean"
     ).await?;
 
     Ok(())

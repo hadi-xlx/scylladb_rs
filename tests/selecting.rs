@@ -12,7 +12,7 @@ async fn selecting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let select_query_1: Result<QueryResult, QueryError> = client
         .query("test_keyspace", "test_table")
         .select(&["name", "score"])
-        .eq("age", 33)
+        .eq("is_active", false)
         .execute()
         .await;
 
@@ -43,7 +43,7 @@ async fn selecting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     .await;
 
     match &select_query_3 {
-        Ok(query_result) => print_query_result("Query 2:", query_result),
+        Ok(query_result) => print_query_result("Query 3:", query_result),
         Err(e) => println!("Query 3 failed: {:?}", e),
     }
 

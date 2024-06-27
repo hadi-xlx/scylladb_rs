@@ -3,16 +3,19 @@ use uuid::Uuid;
 use scylla::QueryResult;
 
 pub fn format_value<T: Display>(value: T) -> String {
-    if value.to_string().parse::<Uuid>().is_ok() {
-        value.to_string()
-    } else if value.to_string().parse::<i64>().is_ok() {
-        value.to_string()
-    } else if value.to_string() == "true" {
+    let value_str = value.to_string();
+    if value_str.parse::<Uuid>().is_ok() {
+        value_str
+    } else if value_str.parse::<i64>().is_ok() {
+        value_str
+    } else if value_str.parse::<f64>().is_ok() {
+        value_str
+    } else if value_str == "true" {
         "True".to_string()
-    } else if value.to_string() == "false" {
+    } else if value_str == "false" {
         "False".to_string()
     } else {
-        format!("'{}'", value.to_string())
+        format!("'{}'", value_str)
     }
 }
 

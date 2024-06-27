@@ -12,25 +12,28 @@ async fn bulk_inserting() -> Result<(), Box<dyn std::error::Error + Send + Sync>
     let client: ScyllaClient = ScyllaClient::new(vec!["127.0.0.1"]).await?;
     let json_body = json!([
         {
+            "user_id": 33,
             "age": 33,
             "name": "Johnny Doe the first",
-            "score": 100.0
+            "score": 100.0,
+            "is_active": true
         },
         {
+            "user_id": 22,
             "age": 22,
             "name": "Johnny Doe the second",
-            "score": 88.5
+            "score": 88.5,
+            "is_active": false
         },
         {
+            "user_id": 11,
             "age": 22,
             "name": "Luke Doe the third",
-            "score": 77.0
+            "score": 77.0,
+            "is_active": true
         }
-        
-
         // Add more JSON objects as needed
     ]);
-
 
     let insert_bulk: Result<scylla::QueryResult, Box<dyn Error + Sync + Send>> = client
         .query("test_keyspace", "test_table")
