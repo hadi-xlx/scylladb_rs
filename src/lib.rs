@@ -1,3 +1,10 @@
+//! # Scyla SDK for Rust
+//!
+//! ## Features
+//! [**`Insert`**](#insert): Add new rows to a table.
+
+
+
 use scylla::Session;
 
 pub mod auth;
@@ -74,8 +81,7 @@ pub enum Clauses {
     OrderBy,
     Limit,
     AllowFiltering,
-    GroupBy,    
-    Having,     
+    GroupBy,       
 }
 
 #[derive(Debug,Clone)]

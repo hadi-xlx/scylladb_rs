@@ -34,17 +34,13 @@
 - [ ] Retrieve as a CSV
 
 
-## Advanced table operations `create_table()`
+## Advanced table definition `create_table()`
 
 - [x] defining partition keys
 - [ ] defining clustering keys
 - [x] defining optional sorting
 - [x] defining optional ttl (time to live)
 
-
-# Scylla SDK for Rust
-
-This is an unofficial Rust SDK for [Scylla](https://www.scylladb.com/), since there is no official SDK for Rust yet.
 
 ## Features
 - [**`Insert`**](#insert): Add new rows to a table.

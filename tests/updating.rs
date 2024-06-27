@@ -1,4 +1,3 @@
-
 use serde_json::json;
 
 use scylladb_rs::ScyllaClient;
@@ -11,21 +10,17 @@ async fn updating() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     let json_body = json!(
         {
-            "id" : "ee8b1a2e-f874-4011-8021-7bad54578efd",
-            "address": "123 Main St",
-            "age": 33,
-            "created_at": "2023-10-01T12:00:00Z",
-            "email": "right@example.com",
-            "is_active": false,
-            "name": "Johnny Doe the first",
-            "phone_number": "123-456-7890",
-            "user_id": "user_123"
+            "score": 100.0
         }
     );
 
     let update = client
-        .query("test", "test2_table")
-        .update(json_body) 
+        .query("test_keyspace", "test_table")
+        .update(
+            "age",
+            22,
+            json_body
+        )
         .await;
 
     match &update {
