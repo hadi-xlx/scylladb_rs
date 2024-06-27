@@ -2,7 +2,6 @@
 use std::error::Error;
 use std::future::Future;
 use std::pin::Pin;
-use std::collections::HashMap;
 
 use serde_json::Value;
 use scylla::QueryResult;

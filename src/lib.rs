@@ -14,6 +14,7 @@ pub mod database {
     pub mod keyspace;
     pub mod materialized_view;
     pub mod table;
+    pub mod index;
 }
 
 #[derive(Debug)]
