@@ -10,10 +10,13 @@ use scylla::Session;
 pub mod auth;
 
 pub mod query {
-    pub mod query;
     pub mod query_builder;
     pub mod utils;
     pub mod operators;
+    pub mod update;
+    pub mod delete;
+    pub mod insert;
+    pub mod select;
 }
 
 pub mod database {

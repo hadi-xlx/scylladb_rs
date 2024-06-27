@@ -1,15 +1,35 @@
 
 use crate::{
+    ScyllaClient,
     QueryBuilder,
     Operations,
-    OrderDirection
-    ,InsertOptions
+    OrderDirection,
+    InsertOptions
 };
 use scylla::QueryResult;
 use scylla::transport::errors::QueryError;
 
 impl<'a> QueryBuilder<'a> {
 
+    pub fn new(
+        operation: Operations,
+        keyspace: &str,
+        table: &str,
+        client: &'a ScyllaClient
+    ) -> Self {
+        Self {
+            operation,
+            keyspace: keyspace.to_string(),
+            table: table.to_string(),
+            columns: Vec::new(),
+            conditions: Vec::new(),
+            clauses: Vec::new(),
+            order: None,
+            insert_options: Vec::new(),
+            client,
+        }
+    }
+    
     pub async fn execute(self) -> Result<QueryResult, QueryError> {
         let query_string: String = self.build();
         let result: QueryResult = self.client.session.query(query_string, &[]).await?;
@@ -20,7 +40,7 @@ impl<'a> QueryBuilder<'a> {
         let operation: &str = match self.operation {
             Operations::Select => "SELECT",
             Operations::Insert => "INSERT INTO",
-            Operations::InsertIfNotExists => "INSERT IF NOT EXISTS",
+            Operations::InsertIfNotExists => "INSERT INTO",  // Note: The same as insert for syntax, condition added later
             Operations::Update => "UPDATE",
             Operations::Delete => "DELETE",
         };
@@ -41,7 +61,11 @@ impl<'a> QueryBuilder<'a> {
             Operations::Delete => format!("{} FROM {}", operation, full_table_name),
             Operations::Insert | Operations::InsertIfNotExists => {
                 if !self.clauses.is_empty() && self.clauses[0].starts_with("JSON") {
-                    format!("{} {} {}", operation, full_table_name, self.clauses.join(" "))
+                    if self.operation == Operations::InsertIfNotExists {
+                        format!("{} {} {} IF NOT EXISTS", operation, full_table_name, self.clauses.join(" "))
+                    } else {
+                        format!("{} {} {}", operation, full_table_name, self.clauses.join(" "))
+                    }
                 } else {
                     format!("{} {}", operation, full_table_name)
                 }

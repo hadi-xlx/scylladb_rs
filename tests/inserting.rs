@@ -11,9 +11,10 @@ async fn inserting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let client: ScyllaClient = ScyllaClient::new(vec!["127.0.0.1"]).await?;
 
     let json_body = json!({
+        "user_id": 3,
         "age": 44,
         "name": "Jane Doe the third",
-        "score": 75.8
+        "score": 71.6
     });
 
 
@@ -27,7 +28,7 @@ async fn inserting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Err(e) => println!("Query failed: {:?}", e),
     }
 
-
     Ok(())
 }
+
 

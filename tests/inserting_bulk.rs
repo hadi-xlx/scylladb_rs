@@ -7,7 +7,7 @@ use scylladb_rs::ScyllaClient;
 use scylladb_rs::query::utils::print_query_result;
 
 #[tokio::test]
-async fn inserting_bulk() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+async fn bulk_inserting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
     let client: ScyllaClient = ScyllaClient::new(vec!["127.0.0.1"]).await?;
     let json_body = json!([
@@ -20,7 +20,14 @@ async fn inserting_bulk() -> Result<(), Box<dyn std::error::Error + Send + Sync>
             "age": 22,
             "name": "Johnny Doe the second",
             "score": 88.5
+        },
+        {
+            "age": 22,
+            "name": "Luke Doe the third",
+            "score": 77.0
         }
+        
+
         // Add more JSON objects as needed
     ]);
 
@@ -37,4 +44,3 @@ async fn inserting_bulk() -> Result<(), Box<dyn std::error::Error + Send + Sync>
 
     Ok(())
 }
-

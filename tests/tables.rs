@@ -9,9 +9,9 @@ async fn creating_table() -> Result<(), Box<dyn std::error::Error + Send + Sync>
     client.create_table(
         "test_keyspace", // keyspace
         "test_table", // table
-        &["age"], // partition keys
-        &[], // clustering keys
-        &[("age", "int"), ("name", "text"), ("score", "double")], // regular columns
+        &["user_id"], // partition keys
+        &["age"], // clustering keys
+        &[("age", "int"), ("name", "text"), ("score", "double"), ("user_id", "int")], // regular columns
         None, // Sorting
         None // time to live
     ).await?;
