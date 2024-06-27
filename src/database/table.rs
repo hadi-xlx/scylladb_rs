@@ -11,7 +11,8 @@ impl ScyllaClient {
         &self,
         keyspace: &str,
         table: &str,
-        primary_keys: &[&str], 
+        partition_keys: &[&str], 
+        clustering_keys: &[&str],
         columns: &[(&str, &str)],
         sorting: Option<&[(&str, &str)]>,
         time_to_live: Option<u32>,
@@ -21,7 +22,13 @@ impl ScyllaClient {
         .map(|(name, type_)| format!("{} {}", name, type_))
         .collect::<Vec<String>>().join(", ");
 
-        let primary_keys_definition = primary_keys.join(", ");
+        let partition_keys_definition = partition_keys.join(", ");
+        let clustering_keys_definition = clustering_keys.join(", ");
+        let primary_keys_definition = if clustering_keys.is_empty() {
+            partition_keys_definition
+        } else {
+            format!("({}, {})", partition_keys_definition, clustering_keys_definition)
+        };
         
         let sorting_definition = if let Some(sorting) = sorting {
             let sorting_clauses = sorting.iter()

@@ -11,9 +11,9 @@ async fn selecting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let client: ScyllaClient = ScyllaClient::new(vec!["127.0.0.1"]).await?;
 
     let select_query_1: Result<QueryResult, QueryError> = client
-        .query("test", "test2_table")
-        .select(&["name", "phone_number"])
-        .eq("age", 48)
+        .query("test_keyspace", "test_table")
+        .select(&["name", "score"])
+        .eq("age", 33)
         .execute()
         .await;
 
@@ -23,10 +23,10 @@ async fn selecting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     }
 
     let select_query_2: Result<QueryResult, QueryError> = client
-        .query("test", "test2_table")
+        .query("test_keyspace", "test_table")
         .select(&["name", "age"])
-        .between("age", 20,40)
-        .like("email","jane%") // you may also do "%jane%" or just "jane"
+        .between("age", 20,50)
+        .like("name","Jane%") // you may also do "%Jane%" or just "Jane"
         .execute()
         .await;
 
@@ -37,8 +37,8 @@ async fn selecting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 
     let select_query_3: Result<QueryResult, QueryError> = client
-    .query("test", "test2_table")
-    .select(&["name", "user_id"])
+    .query("test_keyspace", "test_table")
+    .select(&["name"])
     .in_list("age",&vec![28,22,40]) // the list/vec can also have strings
     .execute()
     .await;
