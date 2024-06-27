@@ -69,13 +69,11 @@ pub enum SetOperators {
     In,
     NotIn,
     Between,
-    NotBetween,
 }
 
 pub enum PatternMatchingOperators {
     Like,
 }
-
 
 pub enum Clauses {
     OrderBy,

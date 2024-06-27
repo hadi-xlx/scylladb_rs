@@ -1,7 +1,10 @@
 use std::error::Error;
 
+use serde_json::{json, Value};
+
 use scylla::QueryResult;
 use scylla::transport::query_result::RowsExpectedError;
+use scylla::IntoTypedRows;
 
 use crate::ScyllaClient;
 
@@ -140,6 +143,38 @@ impl ScyllaClient {
         self.session.query(query, ()).await?;
         
         Ok(())
+    }
+
+    pub async fn get_table_columns(
+        &self,
+        keyspace: &str,
+        table: &str
+    ) -> Result<Value, Box<dyn Error + Send + Sync>> {
+        let query = format!(
+            "SELECT column_name, kind, type FROM system_schema.columns WHERE keyspace_name = '{}' AND table_name = '{}'",
+            keyspace, table
+        );
+
+        let result: QueryResult = self.session.query(query, ()).await?;
+        let rows = result.rows.ok_or("No rows found")?;
+        
+        let mut columns = vec![];
+        for row in rows.into_typed::<(String, String, String)>() {
+            let (column_name, kind, data_type) = row?;
+            columns.push(json!({
+                "column_name": column_name,
+                "kind": kind,
+                "data_type": data_type,
+            }));
+        }
+
+        let json_result = json!({
+            "keyspace": keyspace,
+            "table": table,
+            "columns": columns,
+        });
+
+        Ok(json_result)
     }
 
 }

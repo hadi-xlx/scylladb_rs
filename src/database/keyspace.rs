@@ -1,11 +1,15 @@
 use std::error::Error;
 use std::collections::HashMap;
 
+use serde_json::{json, Value};
+
+use scylla::IntoTypedRows;
+
 use crate::ScyllaClient;
 
 impl ScyllaClient{
 
-    pub async fn create_ks_simple(
+    pub async fn create_keyspace_simple(
         &self,
         keyspace: &str,
         replication_factor: u64
@@ -20,7 +24,7 @@ impl ScyllaClient{
         Ok(())
     }
 
-    pub async fn create_ks_network(
+    pub async fn create_keyspace_network(
         &self,
         keyspace: &str,
         datacenters: HashMap<&str, u64>
@@ -42,7 +46,7 @@ impl ScyllaClient{
         Ok(())
     }
 
-    pub async fn drop_ks(
+    pub async fn drop_keyspace(
         &self,
         keyspace: &str
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
@@ -54,6 +58,29 @@ impl ScyllaClient{
         self.session.query(query,()).await?;
         
         Ok(())
+    }
+
+    pub async fn get_keyspace_tables(
+        &self,
+        keyspace: &str
+    ) -> Result<Value, Box<dyn Error + Send + Sync>> {
+        let query = format!(
+            "SELECT table_name FROM system_schema.tables WHERE keyspace_name = '{}'",
+            keyspace
+        );
+
+        let result = self.session.query(query, ()).await?;
+        let rows = result.rows.ok_or("No rows found")?;
+        let table_names: Vec<String> = rows.into_typed::<(String,)>()
+            .map(|row| row.map(|(table_name,)| table_name))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let json_result = json!({
+            "keyspace": keyspace,
+            "tables": table_names,
+        });
+
+        Ok(json_result)
     }
 
 }

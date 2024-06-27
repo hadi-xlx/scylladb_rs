@@ -33,4 +33,15 @@ async fn dropping_table() -> Result<(), Box<dyn std::error::Error + Send + Sync>
     Ok(())
 }
 
+#[tokio::test]
+async fn getting_table_columns() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let client: ScyllaClient = ScyllaClient::new(vec!["127.0.0.1"]).await?;
+
+    let columns = client.get_table_columns("test_keyspace", "test_table").await?;
+
+    println!("{:?}", columns);
+
+    Ok(())
+}
+
 
