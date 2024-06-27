@@ -1,7 +1,7 @@
 //! # Scyla SDK for Rust
 //!
 //! ## Examples
-//! 
+//! test
 //! ### Create a keyspace
 //! ```rust
 //! use scylladb_rs::ScyllaClient;
