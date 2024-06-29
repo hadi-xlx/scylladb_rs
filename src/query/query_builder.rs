@@ -46,11 +46,10 @@ impl<'a> QueryBuilder<'a> {
         let operation: &str = match self.operation {
             Operations::Select => "SELECT",
             Operations::Insert => "INSERT INTO",
-            Operations::InsertIfNotExists => "INSERT INTO",  // Note: The same as insert for syntax, condition added later
             Operations::Update => "UPDATE",
             Operations::Delete => "DELETE",
         };
-
+    
         let columns: String = if self.columns.is_empty() {
             if self.operation == Operations::Delete {
                 "".to_string()
@@ -60,35 +59,31 @@ impl<'a> QueryBuilder<'a> {
         } else {
             self.columns.join(", ")
         };
-
+    
         let full_table_name: String = format!("{}.{}", self.keyspace, self.table);
         let mut query = match self.operation {
             Operations::Select => format!("{} {} FROM {}", operation, columns, full_table_name),
             Operations::Delete => format!("{} FROM {}", operation, full_table_name),
-            Operations::Insert | Operations::InsertIfNotExists => {
+            Operations::Insert => {
                 if !self.clauses.is_empty() && self.clauses[0].starts_with("JSON") {
-                    if self.operation == Operations::InsertIfNotExists {
-                        format!("{} {} {} IF NOT EXISTS", operation, full_table_name, self.clauses.join(" "))
-                    } else {
-                        format!("{} {} {}", operation, full_table_name, self.clauses.join(" "))
-                    }
+                    format!("{} {} {}", operation, full_table_name, self.clauses.join(" "))
                 } else {
                     format!("{} {}", operation, full_table_name)
                 }
             },
             Operations::Update => format!("{} {}", operation, full_table_name),
         };
-
+    
         if self.operation == Operations::Update && !self.columns.is_empty() {
             query.push_str(" SET ");
             query.push_str(&columns);
         }
-
+    
         if !self.conditions.is_empty() {
             query.push_str(" WHERE ");
             query.push_str(&self.conditions.join(" AND "));
         }
-
+    
         if let Some((ref col, ref dir)) = self.order {
             let dir_str = match dir {
                 OrderDirection::Asc => "ASC",
@@ -96,17 +91,17 @@ impl<'a> QueryBuilder<'a> {
             };
             query.push_str(&format!(" ORDER BY {} {}", col, dir_str));
         }
-
+    
         if !self.clauses.is_empty() && !self.clauses[0].starts_with("JSON") {
             query.push_str(" ");
             query.push_str(&self.clauses.join(" "));
         }
-
+    
         // Add ALLOW FILTERING if allow_filtering is true
         if self.allow_filtering {
             query.push_str(" ALLOW FILTERING");
         }
-
+    
         if !self.insert_options.is_empty() {
             query.push_str(" USING ");
             let options: Vec<String> = self.insert_options.iter().map(|option| {
@@ -117,11 +112,11 @@ impl<'a> QueryBuilder<'a> {
             }).collect();
             query.push_str(&options.join(" AND "));
         }
-
+    
         query.push(';');
-        println!("\nquery: {}\n", query);
         query
     }
+    
 
     pub fn clause(mut self, clause: &str) -> Self {
         self.clauses.push(clause.to_string());

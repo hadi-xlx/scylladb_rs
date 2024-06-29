@@ -3,7 +3,6 @@ use std::error::Error;
 use serde_json::json;
 
 use scylladb_rs::ScyllaClient;
-use scylladb_rs::query::utils::print_query_result;
 
 #[tokio::test]
 async fn inserting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -12,9 +11,9 @@ async fn inserting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     let json_body = json!({
         "user_id": 3,
-        "age": 44,
-        "name": "Jane Doe the third",
-        "score": 71.6,
+        "age": 23,
+        "name": "Bro Doe the third",
+        "score": 31.6,
         "is_active": true
     });
 
@@ -25,7 +24,7 @@ async fn inserting() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .await;
 
     match &insert {
-        Ok(query_result) => print_query_result("Query:", query_result),
+        Ok(query_result) => println!("Query Successful: {:?}", query_result),
         Err(e) => println!("Query failed: {:?}", e),
     }
 
